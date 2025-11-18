@@ -20,7 +20,7 @@ public class RankingController {
     }
 
     @GetMapping("/rankings/poule/{pouleId}")
-    public ResponseEntity<List<RankingRow>> rankingForPoule(@PathVariable UUID pouleId) {
+    public ResponseEntity<List<RankingRow>> rankingForPoule(@PathVariable("pouleId") UUID pouleId) {
         return ResponseEntity.ok(rankingService.rankingForPoule(pouleId));
     }
 }
