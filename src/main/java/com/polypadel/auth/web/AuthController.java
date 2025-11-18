@@ -21,14 +21,9 @@ public class AuthController {
     private final AuthService authService;
     private final JWTLogoutHelper logoutHelper;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, java.util.Optional<JWTLogoutHelper> logoutHelper) {
         this.authService = authService;
-        this.logoutHelper = null; // will be autowired via setter
-    }
-
-    public AuthController(AuthService authService, JWTLogoutHelper logoutHelper) {
-        this.authService = authService;
-        this.logoutHelper = logoutHelper;
+        this.logoutHelper = logoutHelper.orElse(null);
     }
 
     @PostMapping("/login")

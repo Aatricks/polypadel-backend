@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   db:
     image: postgres:14-alpine
@@ -13,6 +12,7 @@ services:
   app:
     build: .
     environment:
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/polypadel
       SPRING_DATASOURCE_USERNAME: polypadel
       SPRING_DATASOURCE_PASSWORD: changeme
