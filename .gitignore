@@ -13,7 +13,9 @@
 *.log
 .specify/
 specs/
-.github/
+# Allow CI workflows
+!.github/
+!.github/workflows/
 
 # OS
 .DS_Store
