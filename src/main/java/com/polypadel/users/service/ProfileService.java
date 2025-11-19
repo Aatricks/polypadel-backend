@@ -64,6 +64,7 @@ public class ProfileService {
             nj.setUtilisateur(utilisateurRepository.findById(id).orElseThrow());
             // entreprise cannot be set here; keep null; admin flow sets it
             nj.setEntreprise("UNSET");
+            nj.setNumLicence(UUID.randomUUID().toString());
             return nj;
         });
         if (req.dateNaissance != null) {
@@ -102,6 +103,6 @@ public class ProfileService {
     }
 
     private boolean isStrongPassword(String s) {
-        return s != null && s.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\\\d)(?=.*[^A-Za-z0-9]).{8,}$");
+        return s != null && s.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$");
     }
 }

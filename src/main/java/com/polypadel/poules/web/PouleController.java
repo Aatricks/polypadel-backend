@@ -33,29 +33,29 @@ public class PouleController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PouleResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<PouleResponse> get(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(pouleService.get(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PouleResponse> update(@PathVariable UUID id, @Valid @RequestBody PouleUpdateRequest req) {
+    public ResponseEntity<PouleResponse> update(@PathVariable("id") UUID id, @Valid @RequestBody PouleUpdateRequest req) {
         return ResponseEntity.ok(pouleService.update(id, req));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         pouleService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{pouleId}/assign/{teamId}")
-    public ResponseEntity<Void> assignTeam(@PathVariable UUID pouleId, @PathVariable UUID teamId) {
+    public ResponseEntity<Void> assignTeam(@PathVariable("pouleId") UUID pouleId, @PathVariable("teamId") UUID teamId) {
         pouleService.assignTeam(pouleId, teamId);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{pouleId}/remove/{teamId}")
-    public ResponseEntity<Void> removeTeam(@PathVariable UUID pouleId, @PathVariable UUID teamId) {
+    public ResponseEntity<Void> removeTeam(@PathVariable("pouleId") UUID pouleId, @PathVariable("teamId") UUID teamId) {
         pouleService.removeTeam(pouleId, teamId);
         return ResponseEntity.ok().build();
     }

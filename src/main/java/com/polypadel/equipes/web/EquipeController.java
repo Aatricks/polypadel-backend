@@ -3,7 +3,6 @@ package com.polypadel.equipes.web;
 import com.polypadel.equipes.dto.TeamCreateRequest;
 import com.polypadel.equipes.dto.TeamResponse;
 import com.polypadel.equipes.dto.TeamUpdateRequest;
-import com.polypadel.equipes.repository.EquipeRepository;
 import com.polypadel.equipes.service.EquipeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,19 +16,14 @@ import java.util.UUID;
 public class EquipeController {
 
     private final EquipeService equipeService;
-    private final EquipeRepository equipeRepository;
 
-    public EquipeController(EquipeService equipeService, EquipeRepository equipeRepository) {
+    public EquipeController(EquipeService equipeService) {
         this.equipeService = equipeService;
-        this.equipeRepository = equipeRepository;
     }
 
     @GetMapping
     public ResponseEntity<Page<TeamResponse>> list(Pageable pageable) {
-        return ResponseEntity.ok(
-                equipeRepository.findAll(pageable)
-                        .map(e -> equipeService.get(e.getId()))
-        );
+        return ResponseEntity.ok(equipeService.list(pageable));
     }
 
     @PostMapping

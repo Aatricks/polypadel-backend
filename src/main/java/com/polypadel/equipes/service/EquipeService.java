@@ -60,19 +60,10 @@ public class EquipeService {
     @Transactional
     public TeamResponse update(UUID id, TeamUpdateRequest req) {
         Equipe e = equipeRepository.findById(id).orElseThrow();
-        // if team has any played matches, lock edits
-        if (matchRepository.existsByStatutAndEquipe1IdOrStatutAndEquipe2Id(MatchStatus.TERMINE, id, MatchStatus.TERMINE, id)) {
-            throw new BusinessException("TEAM_LOCKED", "Team has played matches");
-        }
+        ensureNotLocked(id);
         if (req.entreprise != null) e.setEntreprise(req.entreprise);
-        if (req.joueur1Id != null) {
-            Joueur j1 = joueurRepository.findById(req.joueur1Id).orElseThrow();
-            e.setJoueur1(j1);
-        }
-        if (req.joueur2Id != null) {
-            Joueur j2 = joueurRepository.findById(req.joueur2Id).orElseThrow();
-            e.setJoueur2(j2);
-        }
+        if (req.joueur1Id != null) e.setJoueur1(joueurRepository.findById(req.joueur1Id).orElseThrow());
+        if (req.joueur2Id != null) e.setJoueur2(joueurRepository.findById(req.joueur2Id).orElseThrow());
         if (req.pouleId != null) {
             Poule p = pouleRepository.findById(req.pouleId).orElseThrow();
             if (!p.equals(e.getPoule()) && equipeRepository.countByPouleId(p.getId()) >= 6) {
@@ -80,23 +71,20 @@ public class EquipeService {
             }
             e.setPoule(p);
         }
+        validateEnterpriseConsistency(e);
         return toResponse(equipeRepository.save(e));
     }
 
     @Transactional
     public void delete(UUID id) {
-        if (matchRepository.existsByStatutAndEquipe1IdOrStatutAndEquipe2Id(MatchStatus.TERMINE, id, MatchStatus.TERMINE, id)) {
-            throw new BusinessException("TEAM_LOCKED", "Team has played matches");
-        }
+        ensureNotLocked(id);
         equipeRepository.deleteById(id);
     }
 
     @Transactional
     public TeamResponse assignToPoule(UUID teamId, UUID pouleId) {
         Equipe e = equipeRepository.findById(teamId).orElseThrow();
-        if (matchRepository.existsByStatutAndEquipe1IdOrStatutAndEquipe2Id(MatchStatus.TERMINE, teamId, MatchStatus.TERMINE, teamId)) {
-            throw new BusinessException("TEAM_LOCKED", "Team has played matches");
-        }
+        ensureNotLocked(teamId);
         Poule p = pouleRepository.findById(pouleId).orElseThrow();
         if (e.getPoule() == null || !p.getId().equals(e.getPoule().getId())) {
             if (equipeRepository.countByPouleId(p.getId()) >= 6) {
@@ -110,9 +98,7 @@ public class EquipeService {
     @Transactional
     public TeamResponse removeFromPoule(UUID teamId) {
         Equipe e = equipeRepository.findById(teamId).orElseThrow();
-        if (matchRepository.existsByStatutAndEquipe1IdOrStatutAndEquipe2Id(MatchStatus.TERMINE, teamId, MatchStatus.TERMINE, teamId)) {
-            throw new BusinessException("TEAM_LOCKED", "Team has played matches");
-        }
+        ensureNotLocked(teamId);
         e.setPoule(null);
         return toResponse(equipeRepository.save(e));
     }
@@ -130,5 +116,25 @@ public class EquipeService {
         r.joueur1Id = e.getJoueur1().getId();
         r.joueur2Id = e.getJoueur2().getId();
         return r;
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<TeamResponse> list(org.springframework.data.domain.Pageable pageable) {
+        return equipeRepository.findAll(pageable).map(this::toResponse);
+    }
+
+    private void ensureNotLocked(UUID teamId) {
+        if (matchRepository.existsByStatutAndEquipe1IdOrStatutAndEquipe2Id(MatchStatus.TERMINE, teamId, MatchStatus.TERMINE, teamId)) {
+            throw new BusinessException("TEAM_LOCKED", "Team has played matches");
+        }
+    }
+
+    private void validateEnterpriseConsistency(Equipe e) {
+        if (e.getJoueur1() != null && e.getJoueur2() != null) {
+            var enterprise = e.getEntreprise();
+            if (enterprise != null && (!enterprise.equals(e.getJoueur1().getEntreprise()) || !enterprise.equals(e.getJoueur2().getEntreprise()))) {
+                throw new BusinessException("TEAM_DIFFERENT_ENTREPRISE", "Players must share enterprise");
+            }
+        }
     }
 }
