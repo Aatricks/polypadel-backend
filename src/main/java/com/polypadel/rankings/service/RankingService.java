@@ -35,44 +35,44 @@ public class RankingService {
         List<UUID> teamIds = teams.stream().map(Equipe::getId).toList();
         List<Match> matches = matchRepository.findFinishedWithinTeams(MatchStatus.TERMINE, teamIds);
 
-        Map<UUID, RankingRow> rowByTeam = new HashMap<>();
+        Map<UUID, RankingStats> statsByTeam = new HashMap<>();
         for (Equipe e : teams) {
-            RankingRow r = new RankingRow();
-            r.teamId = e.getId();
-            r.entreprise = e.getEntreprise();
-            rowByTeam.put(e.getId(), r);
+            RankingStats s = new RankingStats();
+            s.teamId = e.getId();
+            s.entreprise = e.getEntreprise();
+            statsByTeam.put(e.getId(), s);
         }
 
         // Track head‑to‑head wins: h2h[a][b] = wins of a over b
         Map<UUID, Map<UUID, Integer>> h2h = new HashMap<>();
 
         for (Match m : matches) {
-            RankingRow r1 = rowByTeam.get(m.getEquipe1().getId());
-            RankingRow r2 = rowByTeam.get(m.getEquipe2().getId());
-            if (r1 == null || r2 == null) continue; // defensive, should not happen
-            r1.played++; r2.played++;
+            RankingStats s1 = statsByTeam.get(m.getEquipe1().getId());
+            RankingStats s2 = statsByTeam.get(m.getEquipe2().getId());
+            if (s1 == null || s2 == null) continue; // defensive, should not happen
+            s1.played++; s2.played++;
 
             int[] parsed = parseScore(m.getScore1(), m.getScore2());
             int sets1 = parsed[0], sets2 = parsed[1], games1 = parsed[2], games2 = parsed[3];
 
-            r1.setsFor += sets1; r1.setsAgainst += sets2;
-            r2.setsFor += sets2; r2.setsAgainst += sets1;
-            r1.gamesFor += games1; r1.gamesAgainst += games2;
-            r2.gamesFor += games2; r2.gamesAgainst += games1;
+            s1.setsFor += sets1; s1.setsAgainst += sets2;
+            s2.setsFor += sets2; s2.setsAgainst += sets1;
+            s1.gamesFor += games1; s1.gamesAgainst += games2;
+            s2.gamesFor += games2; s2.gamesAgainst += games1;
 
             if (sets1 > sets2) {
-                r1.wins++; r2.losses++;
-                h2h.computeIfAbsent(r1.teamId, k -> new HashMap<>())
-                        .merge(r2.teamId, 1, (oldV, inc) -> oldV + inc);
+                s1.wins++; s2.losses++;
+                h2h.computeIfAbsent(s1.teamId, k -> new HashMap<>())
+                        .merge(s2.teamId, 1, (oldV, inc) -> oldV + inc);
             } else if (sets2 > sets1) {
-                r2.wins++; r1.losses++;
-                h2h.computeIfAbsent(r2.teamId, k -> new HashMap<>())
-                        .merge(r1.teamId, 1, (oldV, inc) -> oldV + inc);
+                s2.wins++; s1.losses++;
+                h2h.computeIfAbsent(s2.teamId, k -> new HashMap<>())
+                        .merge(s1.teamId, 1, (oldV, inc) -> oldV + inc);
             }
         }
 
-        List<RankingRow> rows = new ArrayList<>(rowByTeam.values());
-        rows.sort((a, b) -> {
+        List<RankingStats> statsList = new ArrayList<>(statsByTeam.values());
+        statsList.sort((a, b) -> {
             int cmp = Integer.compare(b.points(), a.points());
             if (cmp != 0) return cmp;
             int aOverB = h2h.getOrDefault(a.teamId, Map.of()).getOrDefault(b.teamId, 0);
@@ -83,7 +83,28 @@ public class RankingService {
             if (cmp != 0) return cmp;
             return Integer.compare(b.gameDiff(), a.gameDiff());
         });
-        return rows;
+
+        return statsList.stream()
+                .map(s -> new RankingRow(
+                        s.teamId, s.entreprise, s.played, s.wins, s.losses,
+                        s.setsFor, s.setsAgainst, s.gamesFor, s.gamesAgainst))
+                .toList();
+    }
+
+    private static class RankingStats {
+        UUID teamId;
+        String entreprise;
+        int played;
+        int wins;
+        int losses;
+        int setsFor;
+        int setsAgainst;
+        int gamesFor;
+        int gamesAgainst;
+
+        int points() { return wins; }
+        int setDiff() { return setsFor - setsAgainst; }
+        int gameDiff() { return gamesFor - gamesAgainst; }
     }
 
     private static final Pattern SET_RE = Pattern.compile("(\\d{1,2})-(\\d{1,2})");

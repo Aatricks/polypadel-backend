@@ -33,14 +33,14 @@ public class PouleService {
     @Transactional
     public PouleResponse create(PouleCreateRequest req) {
         Poule p = new Poule();
-        p.setNom(req.nom.trim());
+        p.setNom(req.nom().trim());
         return toResponse(pouleRepository.save(p));
     }
 
     @Transactional
     public PouleResponse update(UUID id, PouleUpdateRequest req) {
         Poule p = pouleRepository.findById(id).orElseThrow();
-        p.setNom(req.nom.trim());
+        p.setNom(req.nom().trim());
         return toResponse(pouleRepository.save(p));
     }
 
@@ -71,17 +71,14 @@ public class PouleService {
     public void removeTeam(UUID pouleId, UUID teamId) {
         // ensure the team is currently in this poule
         var resp = equipeService.get(teamId);
-        if (resp.pouleId == null || !resp.pouleId.equals(pouleId)) {
+        if (resp.pouleId() == null || !resp.pouleId().equals(pouleId)) {
             throw new BusinessException("TEAM_NOT_IN_POULE", "Team is not in this poule");
         }
         equipeService.removeFromPoule(teamId);
     }
 
     private PouleResponse toResponse(Poule p) {
-        PouleResponse r = new PouleResponse();
-        r.id = p.getId();
-        r.nom = p.getNom();
-        r.teamCount = p.getId() == null ? 0 : equipeRepository.countByPouleId(p.getId());
-        return r;
+        int teamCount = p.getId() == null ? 0 : equipeRepository.countByPouleId(p.getId());
+        return new PouleResponse(p.getId(), p.getNom(), teamCount);
     }
 }

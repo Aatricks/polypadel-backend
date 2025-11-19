@@ -2,16 +2,17 @@ package com.polypadel.rankings.dto;
 
 import java.util.UUID;
 
-public class RankingRow implements Comparable<RankingRow> {
-    public UUID teamId;
-    public String entreprise;
-    public int played;
-    public int wins;
-    public int losses;
-    public int setsFor;
-    public int setsAgainst;
-    public int gamesFor;
-    public int gamesAgainst;
+public record RankingRow(
+    UUID teamId,
+    String entreprise,
+    int played,
+    int wins,
+    int losses,
+    int setsFor,
+    int setsAgainst,
+    int gamesFor,
+    int gamesAgainst
+) implements Comparable<RankingRow> {
 
     public int points() {
         return wins; // 1 point per win

@@ -8,7 +8,7 @@ import com.polypadel.domain.enums.Role;
 import com.polypadel.equipes.repository.EquipeRepository;
 import com.polypadel.joueurs.repository.JoueurRepository;
 import com.polypadel.poules.repository.PouleRepository;
-import com.polypadel.repository.UtilisateurRepository;
+import com.polypadel.users.repository.UtilisateurRepository;
 import com.polypadel.testsupport.PostgresTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -2,8 +2,8 @@ package com.polypadel.security;
 
 import com.polypadel.domain.entity.JSONToken;
 import com.polypadel.domain.entity.Utilisateur;
-import com.polypadel.repository.JSONTokenRepository;
-import com.polypadel.repository.UtilisateurRepository;
+import com.polypadel.auth.repository.JSONTokenRepository;
+import com.polypadel.users.repository.UtilisateurRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

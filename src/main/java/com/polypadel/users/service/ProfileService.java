@@ -4,7 +4,7 @@ import com.polypadel.common.exception.BusinessException;
 import com.polypadel.domain.entity.Joueur;
 import com.polypadel.domain.entity.Utilisateur;
 import com.polypadel.joueurs.repository.JoueurRepository;
-import com.polypadel.repository.UtilisateurRepository;
+import com.polypadel.users.repository.UtilisateurRepository;
 import com.polypadel.users.dto.PasswordUpdateRequest;
 import com.polypadel.users.dto.ProfileResponse;
 import com.polypadel.users.dto.ProfileUpdateRequest;
@@ -41,19 +41,25 @@ public class ProfileService {
     public ProfileResponse getProfile() {
         UUID id = currentUserId();
         Utilisateur u = utilisateurRepository.findById(id).orElseThrow();
-        ProfileResponse resp = new ProfileResponse();
-        resp.userId = u.getId();
-        resp.email = u.getEmail();
-        resp.role = u.getRole().name();
-        joueurRepository.findByUtilisateurId(id).ifPresent(j -> {
-            resp.playerId = j.getId();
-            resp.nom = j.getNom();
-            resp.prenom = j.getPrenom();
-            resp.dateNaissance = j.getDateNaissance();
-            resp.photoUrl = j.getPhotoUrl();
-            resp.entreprise = j.getEntreprise();
-        });
-        return resp;
+        
+        return joueurRepository.findByUtilisateurId(id)
+            .map(j -> new ProfileResponse(
+                u.getId(),
+                u.getEmail(),
+                u.getRole().name(),
+                j.getId(),
+                j.getNom(),
+                j.getPrenom(),
+                j.getDateNaissance(),
+                j.getPhotoUrl(),
+                j.getEntreprise()
+            ))
+            .orElseGet(() -> new ProfileResponse(
+                u.getId(),
+                u.getEmail(),
+                u.getRole().name(),
+                null, null, null, null, null, null
+            ));
     }
 
     @Transactional
@@ -67,14 +73,14 @@ public class ProfileService {
             nj.setNumLicence(UUID.randomUUID().toString());
             return nj;
         });
-        if (req.dateNaissance != null) {
-            validateAge(req.dateNaissance);
+        if (req.dateNaissance() != null) {
+            validateAge(req.dateNaissance());
         }
-        j.setNom(req.nom);
-        j.setPrenom(req.prenom);
-        j.setDateNaissance(req.dateNaissance);
-        j.setPhotoUrl(req.photoUrl);
-        Joueur saved = joueurRepository.save(j);
+        j.setNom(req.nom());
+        j.setPrenom(req.prenom());
+        j.setDateNaissance(req.dateNaissance());
+        j.setPhotoUrl(req.photoUrl());
+        joueurRepository.save(j);
         return getProfile();
     }
 
@@ -82,13 +88,13 @@ public class ProfileService {
     public void changePassword(PasswordUpdateRequest req) {
         UUID id = currentUserId();
         Utilisateur u = utilisateurRepository.findById(id).orElseThrow();
-        if (!passwordEncoder.matches(req.currentPassword, u.getPasswordHash())) {
+        if (!passwordEncoder.matches(req.currentPassword(), u.getPasswordHash())) {
             throw new BusinessException("PROFILE_PASSWORD_INVALID", "Current password invalid");
         }
-        if (!isStrongPassword(req.newPassword)) {
+        if (!isStrongPassword(req.newPassword())) {
             throw new BusinessException("PROFILE_PASSWORD_WEAK", "New password weak");
         }
-        u.setPasswordHash(passwordEncoder.encode(req.newPassword));
+        u.setPasswordHash(passwordEncoder.encode(req.newPassword()));
         utilisateurRepository.save(u);
     }
 

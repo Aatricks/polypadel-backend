@@ -6,7 +6,7 @@ import com.polypadel.common.exception.BusinessException;
 import com.polypadel.common.exception.ErrorCodes;
 import com.polypadel.domain.entity.Utilisateur;
 import com.polypadel.domain.enums.Role;
-import com.polypadel.repository.UtilisateurRepository;
+import com.polypadel.users.repository.UtilisateurRepository;
 import com.polypadel.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

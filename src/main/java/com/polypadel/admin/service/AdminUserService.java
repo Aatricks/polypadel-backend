@@ -6,7 +6,7 @@ import com.polypadel.admin.dto.AdminResetPasswordResponse;
 import com.polypadel.common.exception.BusinessException;
 import com.polypadel.domain.entity.Utilisateur;
 import com.polypadel.domain.enums.Role;
-import com.polypadel.repository.UtilisateurRepository;
+import com.polypadel.users.repository.UtilisateurRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,13 +32,13 @@ public class AdminUserService {
 
     @Transactional
     public AdminCreateUserResponse create(AdminCreateUserRequest req) {
-        String email = req.email.trim().toLowerCase(Locale.ROOT);
+        String email = req.email().trim().toLowerCase(Locale.ROOT);
         if (utilisateurRepository.findByEmail(email).isPresent()) {
             throw new BusinessException("USER_EMAIL_EXISTS", "Email already registered");
         }
         Role role;
         try {
-            role = Role.valueOf(req.role.toUpperCase(Locale.ROOT));
+            role = Role.valueOf(req.role().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw new BusinessException("USER_ROLE_INVALID", "Invalid role");
         }
@@ -50,12 +50,7 @@ public class AdminUserService {
         u.setRole(role);
         u.setActive(true);
         Utilisateur saved = utilisateurRepository.save(u);
-        AdminCreateUserResponse resp = new AdminCreateUserResponse();
-        resp.id = saved.getId();
-        resp.email = saved.getEmail();
-        resp.role = saved.getRole().name();
-        resp.tempPassword = tempPwd;
-        return resp;
+        return new AdminCreateUserResponse(saved.getId(), saved.getEmail(), saved.getRole().name(), tempPwd);
     }
 
     @Transactional
@@ -64,9 +59,7 @@ public class AdminUserService {
         String tempPwd = generateStrongPassword();
         u.setPasswordHash(passwordEncoder.encode(tempPwd));
         utilisateurRepository.save(u);
-        AdminResetPasswordResponse resp = new AdminResetPasswordResponse();
-        resp.tempPassword = tempPwd;
-        return resp;
+        return new AdminResetPasswordResponse(tempPwd);
     }
 
     private String hashEmail(String email) {

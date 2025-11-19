@@ -11,6 +11,7 @@ import com.polypadel.joueurs.repository.JoueurRepository;
 import com.polypadel.matches.dto.MatchCreateRequest;
 import com.polypadel.matches.dto.MatchResponse;
 import com.polypadel.matches.dto.MatchUpdateScoreRequest;
+import com.polypadel.matches.mapper.MatchMapper;
 import com.polypadel.matches.repository.MatchRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,27 +28,30 @@ public class MatchService {
     private final EventRepository eventRepository;
     private final EquipeRepository equipeRepository;
     private final JoueurRepository joueurRepository;
+    private final MatchMapper matchMapper;
 
     public MatchService(MatchRepository matchRepository,
                         EventRepository eventRepository,
                         EquipeRepository equipeRepository,
-                        JoueurRepository joueurRepository) {
+                        JoueurRepository joueurRepository,
+                        MatchMapper matchMapper) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
         this.equipeRepository = equipeRepository;
         this.joueurRepository = joueurRepository;
+        this.matchMapper = matchMapper;
     }
 
     @Transactional
     public MatchResponse create(MatchCreateRequest req) {
-        if (req.equipe1Id.equals(req.equipe2Id)) {
+        if (req.equipe1Id().equals(req.equipe2Id())) {
             throw new BusinessException("MATCH_TEAMS_SAME", "Teams must be different");
         }
-        Evenement event = eventRepository.findById(req.evenementId).orElseThrow();
-        Equipe t1 = equipeRepository.findById(req.equipe1Id).orElseThrow();
-        Equipe t2 = equipeRepository.findById(req.equipe2Id).orElseThrow();
+        Evenement event = eventRepository.findById(req.evenementId()).orElseThrow();
+        Equipe t1 = equipeRepository.findById(req.equipe1Id()).orElseThrow();
+        Equipe t2 = equipeRepository.findById(req.equipe2Id()).orElseThrow();
 
-        if (matchRepository.existsByEvenementIdAndPisteAndStartTime(event.getId(), req.piste, req.startTime)) {
+        if (matchRepository.existsByEvenementIdAndPisteAndStartTime(event.getId(), req.piste(), req.startTime())) {
             throw new BusinessException("MATCH_SLOT_TAKEN", "This time slot and piste are already used");
         }
 
@@ -60,24 +64,24 @@ public class MatchService {
         m.setEvenement(event);
         m.setEquipe1(t1);
         m.setEquipe2(t2);
-        m.setPiste(req.piste);
-        m.setStartTime(req.startTime);
+        m.setPiste(req.piste());
+        m.setStartTime(req.startTime());
         m.setStatut(MatchStatus.A_VENIR);
-        return toResponse(matchRepository.save(m));
+        return matchMapper.toResponse(matchRepository.save(m));
     }
 
     @Transactional
     public MatchResponse updateScore(UUID id, MatchUpdateScoreRequest req) {
         Match m = matchRepository.findById(id).orElseThrow();
-        if (req.statut != null) {
-            m.setStatut(req.statut);
+        if (req.statut() != null) {
+            m.setStatut(req.statut());
         }
         if (m.getStatut() == MatchStatus.TERMINE) {
-            ScoreValidator.validate(req.score1, req.score2);
+            ScoreValidator.validate(req.score1(), req.score2());
         }
-        if (req.score1 != null) m.setScore1(req.score1);
-        if (req.score2 != null) m.setScore2(req.score2);
-        return toResponse(matchRepository.save(m));
+        if (req.score1() != null) m.setScore1(req.score1());
+        if (req.score2() != null) m.setScore2(req.score2());
+        return matchMapper.toResponse(matchRepository.save(m));
     }
 
     @Transactional(readOnly = true)
@@ -88,12 +92,12 @@ public class MatchService {
         var teamIds = equipeRepository.findIdsByPlayer(joueur.getId());
         if (teamIds.isEmpty()) return List.of();
         var statuses = List.of(MatchStatus.A_VENIR, MatchStatus.EN_COURS);
-        return matchRepository.findUpcomingForTeams(statuses, teamIds).stream().map(this::toResponse).toList();
+        return matchRepository.findUpcomingForTeams(statuses, teamIds).stream().map(matchMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public List<MatchResponse> listByEvent(UUID eventId) {
-        return matchRepository.findByEvenementIdOrderByStartTimeAsc(eventId).stream().map(this::toResponse).toList();
+        return matchRepository.findByEvenementIdOrderByStartTimeAsc(eventId).stream().map(matchMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -104,20 +108,6 @@ public class MatchService {
         var teamIds = equipeRepository.findIdsByPlayer(joueur.getId());
         if (teamIds.isEmpty()) return List.of();
         var statuses = List.of(MatchStatus.TERMINE);
-        return matchRepository.findUpcomingForTeams(statuses, teamIds).stream().map(this::toResponse).toList();
-    }
-
-    private MatchResponse toResponse(Match m) {
-        MatchResponse r = new MatchResponse();
-        r.id = m.getId();
-        r.evenementId = m.getEvenement().getId();
-        r.equipe1Id = m.getEquipe1().getId();
-        r.equipe2Id = m.getEquipe2().getId();
-        r.piste = m.getPiste();
-        r.startTime = m.getStartTime();
-        r.statut = m.getStatut();
-        r.score1 = m.getScore1();
-        r.score2 = m.getScore2();
-        return r;
+        return matchRepository.findUpcomingForTeams(statuses, teamIds).stream().map(matchMapper::toResponse).toList();
     }
 }

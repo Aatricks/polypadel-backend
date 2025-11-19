@@ -2,9 +2,9 @@ package com.polypadel.admin.dto;
 
 import java.util.UUID;
 
-public class AdminCreateUserResponse {
-    public UUID id;
-    public String email;
-    public String role;
-    public String tempPassword;
-}
+public record AdminCreateUserResponse(
+    UUID id,
+    String email,
+    String role,
+    String tempPassword
+) {}

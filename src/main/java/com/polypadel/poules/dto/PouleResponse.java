@@ -2,8 +2,8 @@ package com.polypadel.poules.dto;
 
 import java.util.UUID;
 
-public class PouleResponse {
-    public UUID id;
-    public String nom;
-    public int teamCount;
-}
+public record PouleResponse(
+    UUID id,
+    String nom,
+    int teamCount
+) {}

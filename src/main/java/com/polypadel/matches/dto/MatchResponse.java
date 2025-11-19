@@ -5,14 +5,14 @@ import com.polypadel.domain.enums.MatchStatus;
 import java.time.LocalTime;
 import java.util.UUID;
 
-public class MatchResponse {
-    public UUID id;
-    public UUID evenementId;
-    public UUID equipe1Id;
-    public UUID equipe2Id;
-    public Integer piste;
-    public LocalTime startTime;
-    public MatchStatus statut;
-    public String score1;
-    public String score2;
-}
+public record MatchResponse(
+    UUID id,
+    UUID evenementId,
+    UUID equipe1Id,
+    UUID equipe2Id,
+    Integer piste,
+    LocalTime startTime,
+    MatchStatus statut,
+    String score1,
+    String score2
+) {}

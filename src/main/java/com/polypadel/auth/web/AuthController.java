@@ -28,9 +28,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse httpResponse) {
-        LoginResponse resp = authService.login(request.getEmail().trim().toLowerCase(), request.getPassword());
+        LoginResponse resp = authService.login(request.email().trim().toLowerCase(), request.password());
         // Set HttpOnly cookie
-        ResponseCookie cookie = ResponseCookie.from("JWT", resp.getToken())
+        ResponseCookie cookie = ResponseCookie.from("JWT", resp.token())
                 .httpOnly(true)
                 .secure(false) // set true behind HTTPS
                 .path("/")

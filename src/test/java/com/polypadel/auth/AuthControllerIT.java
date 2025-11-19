@@ -2,7 +2,7 @@ package com.polypadel.auth;
 
 import com.polypadel.domain.entity.Utilisateur;
 import com.polypadel.domain.enums.Role;
-import com.polypadel.repository.UtilisateurRepository;
+import com.polypadel.users.repository.UtilisateurRepository;
 import com.polypadel.testsupport.PostgresTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

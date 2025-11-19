@@ -3,8 +3,8 @@ package com.polypadel.poules.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public class PouleCreateRequest {
+public record PouleCreateRequest(
     @NotBlank
     @Size(max = 64)
-    public String nom;
-}
+    String nom
+) {}

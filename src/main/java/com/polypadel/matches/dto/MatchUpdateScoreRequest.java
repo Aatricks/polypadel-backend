@@ -2,8 +2,8 @@ package com.polypadel.matches.dto;
 
 import com.polypadel.domain.enums.MatchStatus;
 
-public class MatchUpdateScoreRequest {
-    public String score1;
-    public String score2;
-    public MatchStatus statut;
-}
+public record MatchUpdateScoreRequest(
+    String score1,
+    String score2,
+    MatchStatus statut
+) {}

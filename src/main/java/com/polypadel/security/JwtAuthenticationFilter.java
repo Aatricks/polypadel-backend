@@ -1,6 +1,6 @@
 package com.polypadel.security;
 
-import com.polypadel.repository.JSONTokenRepository;
+import com.polypadel.auth.repository.JSONTokenRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

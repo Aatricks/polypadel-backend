@@ -1,4 +1,4 @@
-package com.polypadel.repository;
+package com.polypadel.auth.repository;
 
 import com.polypadel.domain.entity.JSONToken;
 import org.springframework.data.jpa.repository.JpaRepository;

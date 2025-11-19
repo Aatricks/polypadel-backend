@@ -76,21 +76,21 @@ public class SecurityPublicEndpointsTest {
 
         // Stub RankingService to avoid Mockito/ByteBuddy on JDK 25
         @Bean
-        @Primary
-        RankingService rankingService() {
+            @Primary
+            RankingService rankingService() {
             return new RankingService(null, null) {
                 @Override
                 public java.util.List<RankingRow> rankingForPoule(java.util.UUID pouleId) {
-                    return java.util.List.of(new RankingRow());
+                    return java.util.List.of(new RankingRow(java.util.UUID.randomUUID(), "", 0, 0, 0, 0, 0, 0, 0));
                 }
             };
         }
 
         // Provide a minimal EventService bean so EventController can be created; methods won't be hit in these tests
         @Bean
-        @Primary
-        EventService eventService() {
-            return new EventService(null, null) { };
+            @Primary
+            EventService eventService() {
+            return new EventService(null, null, null) { };
         }
     }
 }

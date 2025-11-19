@@ -1,4 +1,4 @@
-package com.polypadel.repository;
+package com.polypadel.users.repository;
 
 import com.polypadel.domain.entity.Utilisateur;
 import org.springframework.data.jpa.repository.JpaRepository;
