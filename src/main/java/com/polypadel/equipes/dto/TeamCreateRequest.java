@@ -5,12 +5,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-public class TeamCreateRequest {
-    @NotBlank
-    public String entreprise;
-    @NotNull
-    public UUID joueur1Id;
-    @NotNull
-    public UUID joueur2Id;
-    public UUID pouleId; // optional
-}
+public record TeamCreateRequest(
+    @NotBlank String entreprise,
+    @NotNull UUID joueur1Id,
+    @NotNull UUID joueur2Id,
+    UUID pouleId
+) {}

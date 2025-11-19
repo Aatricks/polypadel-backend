@@ -1,6 +1,9 @@
 package com.polypadel.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.UUID;
 
@@ -8,6 +11,7 @@ import java.util.UUID;
 @Table(name = "equipe", indexes = {
         @Index(name = "idx_equipe_poule", columnList = "poule_id")
 })
+@Getter @Setter @NoArgsConstructor
 public class Equipe {
     @Id
     @GeneratedValue
@@ -27,15 +31,4 @@ public class Equipe {
     @OneToOne(optional = false)
     @JoinColumn(name = "joueur2_id", nullable = false, foreignKey = @ForeignKey(name = "fk_equipe_joueur2"))
     private Joueur joueur2;
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public String getEntreprise() { return entreprise; }
-    public void setEntreprise(String entreprise) { this.entreprise = entreprise; }
-    public Poule getPoule() { return poule; }
-    public void setPoule(Poule poule) { this.poule = poule; }
-    public Joueur getJoueur1() { return joueur1; }
-    public void setJoueur1(Joueur joueur1) { this.joueur1 = joueur1; }
-    public Joueur getJoueur2() { return joueur2; }
-    public void setJoueur2(Joueur joueur2) { this.joueur2 = joueur2; }
 }

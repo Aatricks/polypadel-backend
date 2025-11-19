@@ -5,6 +5,7 @@ import com.polypadel.domain.entity.Evenement;
 import com.polypadel.events.dto.EventCreateRequest;
 import com.polypadel.events.dto.EventResponse;
 import com.polypadel.events.dto.EventUpdateRequest;
+import com.polypadel.events.mapper.EventMapper;
 import com.polypadel.events.repository.EventRepository;
 import com.polypadel.matches.repository.MatchRepository;
 import org.springframework.data.domain.Page;
@@ -21,28 +22,30 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final MatchRepository matchRepository;
+    private final EventMapper eventMapper;
 
-    public EventService(EventRepository eventRepository, MatchRepository matchRepository) {
+    public EventService(EventRepository eventRepository, MatchRepository matchRepository, EventMapper eventMapper) {
         this.eventRepository = eventRepository;
         this.matchRepository = matchRepository;
+        this.eventMapper = eventMapper;
     }
 
     @Transactional
     public EventResponse create(EventCreateRequest req) {
-        validateDates(req.dateDebut, req.dateFin);
+        validateDates(req.dateDebut(), req.dateFin());
         Evenement e = new Evenement();
-        e.setDateDebut(req.dateDebut);
-        e.setDateFin(req.dateFin);
-        return toResponse(eventRepository.save(e));
+        e.setDateDebut(req.dateDebut());
+        e.setDateFin(req.dateFin());
+        return eventMapper.toResponse(eventRepository.save(e));
     }
 
     @Transactional
     public EventResponse update(UUID id, EventUpdateRequest req) {
-        validateDates(req.dateDebut, req.dateFin);
+        validateDates(req.dateDebut(), req.dateFin());
         Evenement e = eventRepository.findById(id).orElseThrow();
-        e.setDateDebut(req.dateDebut);
-        e.setDateFin(req.dateFin);
-        return toResponse(eventRepository.save(e));
+        e.setDateDebut(req.dateDebut());
+        e.setDateFin(req.dateFin());
+        return eventMapper.toResponse(eventRepository.save(e));
     }
 
     @Transactional
@@ -55,30 +58,22 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public EventResponse get(UUID id) {
-        return toResponse(eventRepository.findById(id).orElseThrow());
+        return eventMapper.toResponse(eventRepository.findById(id).orElseThrow());
     }
 
     @Transactional(readOnly = true)
     public Page<EventResponse> list(Pageable pageable) {
-        return eventRepository.findAll(pageable).map(this::toResponse);
+        return eventRepository.findAll(pageable).map(eventMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     public List<EventResponse> calendar(LocalDate start, LocalDate end) {
-        return eventRepository.findInRange(start, end).stream().map(this::toResponse).toList();
+        return eventMapper.toResponseList(eventRepository.findInRange(start, end));
     }
 
     private void validateDates(LocalDate start, LocalDate end) {
         if (start == null || end == null || end.isBefore(start)) {
             throw new BusinessException("INVALID_DATES", "dateFin must be on or after dateDebut");
         }
-    }
-
-    private EventResponse toResponse(Evenement e) {
-        EventResponse r = new EventResponse();
-        r.id = e.getId();
-        r.dateDebut = e.getDateDebut();
-        r.dateFin = e.getDateFin();
-        return r;
     }
 }

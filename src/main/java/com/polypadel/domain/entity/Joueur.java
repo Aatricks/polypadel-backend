@@ -3,6 +3,9 @@ package com.polypadel.domain.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -11,6 +14,7 @@ import java.util.UUID;
 @Table(name = "joueur", uniqueConstraints = {
         @UniqueConstraint(name = "uk_joueur_num_licence", columnNames = {"num_licence"})
 })
+@Getter @Setter @NoArgsConstructor
 public class Joueur {
     @Id
     @GeneratedValue
@@ -37,21 +41,4 @@ public class Joueur {
 
     @Column(nullable = false, length = 128)
     private String entreprise;
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public String getNumLicence() { return numLicence; }
-    public void setNumLicence(String numLicence) { this.numLicence = numLicence; }
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
-    public String getPrenom() { return prenom; }
-    public void setPrenom(String prenom) { this.prenom = prenom; }
-    public LocalDate getDateNaissance() { return dateNaissance; }
-    public void setDateNaissance(LocalDate dateNaissance) { this.dateNaissance = dateNaissance; }
-    public String getPhotoUrl() { return photoUrl; }
-    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
-    public Utilisateur getUtilisateur() { return utilisateur; }
-    public void setUtilisateur(Utilisateur utilisateur) { this.utilisateur = utilisateur; }
-    public String getEntreprise() { return entreprise; }
-    public void setEntreprise(String entreprise) { this.entreprise = entreprise; }
 }

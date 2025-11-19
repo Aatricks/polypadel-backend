@@ -8,6 +8,7 @@ import com.polypadel.domain.enums.MatchStatus;
 import com.polypadel.equipes.dto.TeamCreateRequest;
 import com.polypadel.equipes.dto.TeamResponse;
 import com.polypadel.equipes.dto.TeamUpdateRequest;
+import com.polypadel.equipes.mapper.EquipeMapper;
 import com.polypadel.equipes.repository.EquipeRepository;
 import com.polypadel.joueurs.repository.JoueurRepository;
 import com.polypadel.matches.repository.MatchRepository;
@@ -24,19 +25,21 @@ public class EquipeService {
     private final JoueurRepository joueurRepository;
     private final PouleRepository pouleRepository;
     private final MatchRepository matchRepository;
+    private final EquipeMapper equipeMapper;
 
-    public EquipeService(EquipeRepository equipeRepository, JoueurRepository joueurRepository, PouleRepository pouleRepository, MatchRepository matchRepository) {
+    public EquipeService(EquipeRepository equipeRepository, JoueurRepository joueurRepository, PouleRepository pouleRepository, MatchRepository matchRepository, EquipeMapper equipeMapper) {
         this.equipeRepository = equipeRepository;
         this.joueurRepository = joueurRepository;
         this.pouleRepository = pouleRepository;
         this.matchRepository = matchRepository;
+        this.equipeMapper = equipeMapper;
     }
 
     @Transactional
     public TeamResponse create(TeamCreateRequest req) {
-        Joueur j1 = joueurRepository.findById(req.joueur1Id).orElseThrow();
-        Joueur j2 = joueurRepository.findById(req.joueur2Id).orElseThrow();
-        if (!j1.getEntreprise().equals(j2.getEntreprise()) || !j1.getEntreprise().equals(req.entreprise)) {
+        Joueur j1 = joueurRepository.findById(req.joueur1Id()).orElseThrow();
+        Joueur j2 = joueurRepository.findById(req.joueur2Id()).orElseThrow();
+        if (!j1.getEntreprise().equals(j2.getEntreprise()) || !j1.getEntreprise().equals(req.entreprise())) {
             throw new BusinessException("TEAM_DIFFERENT_ENTREPRISE", "Players must share enterprise");
         }
         if (equipeRepository.existsByJoueur1IdOrJoueur2Id(j1.getId(), j1.getId()) ||
@@ -44,35 +47,35 @@ public class EquipeService {
             throw new BusinessException("PLAYER_ALREADY_IN_TEAM", "Player already in a team");
         }
         Equipe e = new Equipe();
-        e.setEntreprise(req.entreprise);
+        e.setEntreprise(req.entreprise());
         e.setJoueur1(j1);
         e.setJoueur2(j2);
-        if (req.pouleId != null) {
-            Poule p = pouleRepository.findById(req.pouleId).orElseThrow();
+        if (req.pouleId() != null) {
+            Poule p = pouleRepository.findById(req.pouleId()).orElseThrow();
             if (equipeRepository.countByPouleId(p.getId()) >= 6) {
                 throw new BusinessException("POULE_SIZE_VIOLATION", "Poule already has 6 teams");
             }
             e.setPoule(p);
         }
-        return toResponse(equipeRepository.save(e));
+        return equipeMapper.toResponse(equipeRepository.save(e));
     }
 
     @Transactional
     public TeamResponse update(UUID id, TeamUpdateRequest req) {
         Equipe e = equipeRepository.findById(id).orElseThrow();
         ensureNotLocked(id);
-        if (req.entreprise != null) e.setEntreprise(req.entreprise);
-        if (req.joueur1Id != null) e.setJoueur1(joueurRepository.findById(req.joueur1Id).orElseThrow());
-        if (req.joueur2Id != null) e.setJoueur2(joueurRepository.findById(req.joueur2Id).orElseThrow());
-        if (req.pouleId != null) {
-            Poule p = pouleRepository.findById(req.pouleId).orElseThrow();
+        if (req.entreprise() != null) e.setEntreprise(req.entreprise());
+        if (req.joueur1Id() != null) e.setJoueur1(joueurRepository.findById(req.joueur1Id()).orElseThrow());
+        if (req.joueur2Id() != null) e.setJoueur2(joueurRepository.findById(req.joueur2Id()).orElseThrow());
+        if (req.pouleId() != null) {
+            Poule p = pouleRepository.findById(req.pouleId()).orElseThrow();
             if (!p.equals(e.getPoule()) && equipeRepository.countByPouleId(p.getId()) >= 6) {
                 throw new BusinessException("POULE_SIZE_VIOLATION", "Poule already has 6 teams");
             }
             e.setPoule(p);
         }
         validateEnterpriseConsistency(e);
-        return toResponse(equipeRepository.save(e));
+        return equipeMapper.toResponse(equipeRepository.save(e));
     }
 
     @Transactional
@@ -92,7 +95,7 @@ public class EquipeService {
             }
         }
         e.setPoule(p);
-        return toResponse(equipeRepository.save(e));
+        return equipeMapper.toResponse(equipeRepository.save(e));
     }
 
     @Transactional
@@ -100,27 +103,17 @@ public class EquipeService {
         Equipe e = equipeRepository.findById(teamId).orElseThrow();
         ensureNotLocked(teamId);
         e.setPoule(null);
-        return toResponse(equipeRepository.save(e));
+        return equipeMapper.toResponse(equipeRepository.save(e));
     }
 
     @Transactional(readOnly = true)
     public TeamResponse get(UUID id) {
-        return toResponse(equipeRepository.findById(id).orElseThrow());
-    }
-
-    private TeamResponse toResponse(Equipe e) {
-        TeamResponse r = new TeamResponse();
-        r.id = e.getId();
-        r.entreprise = e.getEntreprise();
-        r.pouleId = e.getPoule() != null ? e.getPoule().getId() : null;
-        r.joueur1Id = e.getJoueur1().getId();
-        r.joueur2Id = e.getJoueur2().getId();
-        return r;
+        return equipeMapper.toResponse(equipeRepository.findById(id).orElseThrow());
     }
 
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<TeamResponse> list(org.springframework.data.domain.Pageable pageable) {
-        return equipeRepository.findAll(pageable).map(this::toResponse);
+        return equipeRepository.findAll(pageable).map(equipeMapper::toResponse);
     }
 
     private void ensureNotLocked(UUID teamId) {

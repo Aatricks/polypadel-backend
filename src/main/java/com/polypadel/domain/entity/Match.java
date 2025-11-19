@@ -2,6 +2,9 @@ package com.polypadel.domain.entity;
 
 import com.polypadel.domain.enums.MatchStatus;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalTime;
 import java.util.UUID;
@@ -17,6 +20,7 @@ import java.util.UUID;
                 @Index(name = "idx_match_equipe2", columnList = "equipe2_id")
         }
 )
+@Getter @Setter @NoArgsConstructor
 public class Match {
 
     @Id
@@ -50,23 +54,4 @@ public class Match {
 
     @Column(length = 128)
     private String score2;
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public Integer getPiste() { return piste; }
-    public void setPiste(Integer piste) { this.piste = piste; }
-    public Equipe getEquipe1() { return equipe1; }
-    public void setEquipe1(Equipe equipe1) { this.equipe1 = equipe1; }
-    public Equipe getEquipe2() { return equipe2; }
-    public void setEquipe2(Equipe equipe2) { this.equipe2 = equipe2; }
-    public Evenement getEvenement() { return evenement; }
-    public void setEvenement(Evenement evenement) { this.evenement = evenement; }
-    public MatchStatus getStatut() { return statut; }
-    public void setStatut(MatchStatus statut) { this.statut = statut; }
-    public LocalTime getStartTime() { return startTime; }
-    public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
-    public String getScore1() { return score1; }
-    public void setScore1(String score1) { this.score1 = score1; }
-    public String getScore2() { return score2; }
-    public void setScore2(String score2) { this.score2 = score2; }
 }
