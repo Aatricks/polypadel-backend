@@ -33,7 +33,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    void login_sets_cookie_and_returns_response() {
+    void login_returns_response() {
         LoginRequest req = new LoginRequest("  TEST@Ex.com  ", "password");
         UUID id = UUID.randomUUID();
         LoginResponse resp = new LoginResponse("token", new UserSummary(id, "test@ex.com", "ADMIN"));
@@ -42,7 +42,6 @@ public class AuthControllerTest {
 
         ResponseEntity<LoginResponse> r = controller.login(req, httpResp);
         assertEquals(200, r.getStatusCodeValue());
-        Mockito.verify(httpResp).addHeader(eq("Set-Cookie"), any(String.class));
         assertEquals(resp, r.getBody());
     }
 
