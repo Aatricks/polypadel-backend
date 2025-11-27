@@ -2,12 +2,12 @@ package com.polypadel.auth.web;
 
 import com.polypadel.auth.dto.LoginRequest;
 import com.polypadel.auth.dto.LoginResponse;
+import com.polypadel.auth.dto.RegisterRequest;
 import com.polypadel.auth.service.AuthService;
 import com.polypadel.security.JWTLogoutHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,15 +29,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse httpResponse) {
         LoginResponse resp = authService.login(request.email().trim().toLowerCase(), request.password());
-        // Set HttpOnly cookie
-        ResponseCookie cookie = ResponseCookie.from("JWT", resp.token())
-                .httpOnly(true)
-                .secure(false) // set true behind HTTPS
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(24 * 60 * 60)
-                .build();
-        httpResponse.addHeader("Set-Cookie", cookie.toString());
+        return ResponseEntity.ok(resp);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse httpResponse) {
+        LoginResponse resp = authService.register(request);
         return ResponseEntity.ok(resp);
     }
 
