@@ -1,107 +1,67 @@
 package com.polypadel.config;
 
-import com.polypadel.domain.entity.*;
-import com.polypadel.domain.enums.MatchStatus;
-import com.polypadel.domain.enums.Role;
-import com.polypadel.equipes.repository.EquipeRepository;
-import com.polypadel.events.repository.EventRepository;
-import com.polypadel.joueurs.repository.JoueurRepository;
-import com.polypadel.users.repository.UtilisateurRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import com.polypadel.matches.repository.MatchRepository;
-import com.polypadel.poules.repository.PouleRepository;
+import com.polypadel.model.*;
+import com.polypadel.repository.*;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
+    private final UserRepository userRepository;
+    private final PlayerRepository playerRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    private final JoueurRepository joueurRepo;
-    private final EquipeRepository equipeRepo;
-    private final PouleRepository pouleRepo;
-    private final EventRepository eventRepo;
-    private final MatchRepository matchRepo;
-    private final UtilisateurRepository userRepo;
-    private final PasswordEncoder encoder;
-
-    public DataInitializer(JoueurRepository joueurRepo, EquipeRepository equipeRepo, PouleRepository pouleRepo,
-                           EventRepository eventRepo, MatchRepository matchRepo, UtilisateurRepository userRepo,
-                           PasswordEncoder encoder) {
-        this.joueurRepo = joueurRepo;
-        this.equipeRepo = equipeRepo;
-        this.pouleRepo = pouleRepo;
-        this.eventRepo = eventRepo;
-        this.matchRepo = matchRepo;
-        this.userRepo = userRepo;
-        this.encoder = encoder;
+    public DataInitializer(UserRepository userRepository, PlayerRepository playerRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.playerRepository = playerRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    @Transactional
     public void run(String... args) {
-        if (joueurRepo.count() > 0) return;
+        if (userRepository.count() == 0) {
+            // Create admin user
+            User admin = new User("admin@padel.com", passwordEncoder.encode("Admin@2025!"), Role.ADMINISTRATEUR);
+            admin = userRepository.save(admin);
 
-        // Create 12 players
-        String[] names = {"Alice","Bob","Clara","David","Eve","Frank","Grace","Hank","Ivy","Jack","Karen","Leo"};
-        List<Joueur> joueurs = new ArrayList<>();
-        for (int i = 0; i < names.length; i++) {
-            Joueur j = new Joueur();
-            j.setNom(names[i]);
-            j.setPrenom(names[i]);
-            j.setNumLicence(String.format("L%06d", i + 1));
-            j.setEntreprise("PolyCorp");
-            j.setDateNaissance(LocalDate.of(1990, (i % 12) + 1, (i % 28) + 1));
-            joueurs.add(j);
-        }
-        joueurRepo.saveAll(joueurs);
+            // Create player user
+            User playerUser = new User("joueur@padel.com", passwordEncoder.encode("Joueur@2025!"), Role.JOUEUR);
+            playerUser = userRepository.save(playerUser);
 
-        // Create poule
-        Poule poule = new Poule();
-        poule.setNom("Poule A");
-        pouleRepo.save(poule);
+            // Create sample players
+            Player p1 = new Player();
+            p1.setFirstName("Jean");
+            p1.setLastName("Dupont");
+            p1.setCompany("Tech Corp");
+            p1.setLicenseNumber("L123456");
+            p1.setUser(playerUser);
+            playerRepository.save(p1);
 
-        // Create 6 teams
-        List<Equipe> teams = new ArrayList<>();
-        for (int t = 0; t < 6; t++) {
-            Equipe e = new Equipe();
-            e.setEntreprise("PolyCorp");
-            e.setJoueur1(joueurs.get(t * 2));
-            e.setJoueur2(joueurs.get(t * 2 + 1));
-            e.setPoule(poule);
-            teams.add(e);
-        }
-        equipeRepo.saveAll(teams);
+            Player p2 = new Player();
+            p2.setFirstName("Marie");
+            p2.setLastName("Martin");
+            p2.setCompany("Tech Corp");
+            p2.setLicenseNumber("L123457");
+            playerRepository.save(p2);
 
-        // Create event with matches
-        Evenement event = new Evenement();
-        event.setDateDebut(LocalDate.now());
-        event.setDateFin(LocalDate.now().plusDays(1));
-        eventRepo.save(event);
+            Player p3 = new Player();
+            p3.setFirstName("Pierre");
+            p3.setLastName("Durand");
+            p3.setCompany("Innov Ltd");
+            p3.setLicenseNumber("L123458");
+            playerRepository.save(p3);
 
-        Match m = new Match();
-        m.setEvenement(event);
-        m.setEquipe1(teams.get(0));
-        m.setEquipe2(teams.get(1));
-        m.setPiste(1);
-        m.setStartTime(LocalTime.of(9, 0));
-        m.setStatut(MatchStatus.A_VENIR);
-        matchRepo.save(m);
+            Player p4 = new Player();
+            p4.setFirstName("Sophie");
+            p4.setLastName("Bernard");
+            p4.setCompany("Innov Ltd");
+            p4.setLicenseNumber("L123459");
+            playerRepository.save(p4);
 
-        // Create admin user
-        if (userRepo.findByEmail("admin@padel.com").isEmpty()) {
-            Utilisateur admin = new Utilisateur();
-            admin.setEmail("admin@padel.com");
-            admin.setEmailHash("admin");
-            admin.setPasswordHash(encoder.encode("Admin@2025!"));
-            admin.setRole(Role.ADMIN);
-            admin.setActive(true);
-            userRepo.save(admin);
+            System.out.println("=== Test accounts created ===");
+            System.out.println("Admin: admin@padel.com / Admin@2025!");
+            System.out.println("Player: joueur@padel.com / Joueur@2025!");
         }
     }
 }

@@ -3,50 +3,29 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.5</version>
+  </parent>
 
   <groupId>com.polypadel</groupId>
   <artifactId>polypadel-backend</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>polypadel-backend</name>
-  <description>PolyPadel Spring Boot Backend</description>
-  <packaging>jar</packaging>
+  <version>1.0.0</version>
+  <name>PolyPadel Backend</name>
 
   <properties>
     <java.version>17</java.version>
-    <spring-boot.version>3.3.5</spring-boot.version>
-    <lombok.version>1.18.36</lombok.version>
-    <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <jjwt.version>0.11.5</jjwt.version>
-    <testcontainers.version>1.20.2</testcontainers.version>
-    <springdoc.version>2.5.0</springdoc.version>
-    <!-- Explicit Flyway version overriding Spring Boot's managed version to support newer Postgres minor versions -->
-    <flyway.version>11.18.0</flyway.version>
   </properties>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.testcontainers</groupId>
-        <artifactId>testcontainers-bom</artifactId>
-        <version>${testcontainers.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
-    <!-- Spring -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -57,112 +36,40 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
+      <groupId>org.xerial</groupId>
+      <artifactId>sqlite-jdbc</artifactId>
+      <version>3.45.1.0</version>
     </dependency>
-
-    <!-- Database -->
     <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-community-dialects</artifactId>
     </dependency>
-
-    <!-- JWT -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
-      <version>${jjwt.version}</version>
+      <version>0.11.5</version>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-impl</artifactId>
-      <version>${jjwt.version}</version>
+      <version>0.11.5</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-jackson</artifactId>
-      <version>${jjwt.version}</version>
+      <version>0.11.5</version>
       <scope>runtime</scope>
     </dependency>
-
-    <!-- Lombok -->
-    <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <optional>true</optional>
-    </dependency>
-
-    <!-- Flyway -->
-    <dependency>
-        <groupId>org.flywaydb</groupId>
-        <artifactId>flyway-core</artifactId>
-      <version>${flyway.version}</version>
-    </dependency>
-    <!-- Flyway database-specific plugin for PostgreSQL (required by Flyway 11+) -->
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-database-postgresql</artifactId>
-      <version>${flyway.version}</version>
-    </dependency>
-
-    <!-- MapStruct -->
-    <dependency>
-      <groupId>org.mapstruct</groupId>
-      <artifactId>mapstruct</artifactId>
-      <version>${mapstruct.version}</version>
-    </dependency>
-
-    <!-- OpenAPI/Swagger UI -->
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>${springdoc.version}</version>
-    </dependency>
-    <!-- Actuator / Metrics -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-registry-prometheus</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.mapstruct</groupId>
-      <artifactId>mapstruct-processor</artifactId>
-      <version>${mapstruct.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- Test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-test</artifactId>
       <scope>test</scope>
-    </dependency>
-    <!-- In-memory DB for fast unit/integration tests -->
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <!-- Keep H2 available at runtime in dev profiles to allow quick local testing -->
-      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
@@ -171,130 +78,6 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>${spring-boot.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>repackage</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- Ensure JUnit 5 (Jupiter) tests are discovered. Without an explicit surefire plugin version Maven may fall back to an older version that does not run Jupiter @Test methods. -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.5</version>
-        <configuration>
-          <!-- Disable module path usage to avoid JPMS related issues in test runtime -->
-          <useModulePath>false</useModulePath>
-          <!-- Write reports to a user-writable directory (previous default became root-owned in earlier runs) -->
-          <reportsDirectory>${project.build.directory}/surefire-user-reports</reportsDirectory>
-          <!-- Allow Byte Buddy experimental support for Java 25+; preserve JaCoCo agent injection -->
-          <argLine>${argLine} -Dnet.bytebuddy.experimental=true</argLine>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
-        <configuration>
-          <release>${java.version}</release>
-          <compilerArgs>
-            <arg>-parameters</arg>
-          </compilerArgs>
-          <annotationProcessorPaths>
-            <!-- Lombok must be available to annotation processors so MapStruct sees generated getters -->
-            <path>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-              <version>${lombok.version}</version>
-            </path>
-            <!-- Binding that helps MapStruct and Lombok play nicely together during annotation processing -->
-            <path>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok-mapstruct-binding</artifactId>
-              <version>0.2.0</version>
-            </path>
-            <path>
-              <groupId>org.mapstruct</groupId>
-              <artifactId>mapstruct-processor</artifactId>
-              <version>${mapstruct.version}</version>
-            </path>
-          </annotationProcessorPaths>
-        </configuration>
-      </plugin>
-      <!-- Spotless plugin removed due to JDK 25 incompatibility -->
-      <!-- Code coverage -->
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.14</version>
-        <executions>
-          <execution>
-            <id>prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-            <configuration>
-              <!-- User-writable exec file to avoid permission issues from prior root-owned runs -->
-              <destFile>${project.build.directory}/jacoco-user.exec</destFile>
-              <!-- Exclude system/framework classes using dot notation to avoid Java 25 (major 69) instrumentation issues -->
-              <excludes>
-                <exclude>java.*</exclude>
-                <exclude>jdk.*</exclude>
-                <exclude>sun.*</exclude>
-                <exclude>javax.*</exclude>
-                <exclude>com.sun.*</exclude>
-                <exclude>org.jcp.*</exclude>
-                <exclude>com.sun.tools.*</exclude>
-                <!-- Exclude dynamically generated Mockito mock classes which trigger Unsupported class file major version 69 under Java 25 -->
-                <exclude>*$MockitoMock*</exclude>
-                <!-- Exclude auxiliary Byte Buddy synthetic helper classes -->
-                <exclude>*$auxiliary$*</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>report</id>
-            <phase>test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-            <configuration>
-              <dataFile>${project.build.directory}/jacoco-user.exec</dataFile>
-              <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
-              <!-- No includes filter here so all instrumented classes from exec file are reported -->
-            </configuration>
-          </execution>
-          <execution>
-            <id>jacoco-check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <rule>
-                  <element>BUNDLE</element>
-                  <limits>
-                    <limit>
-                      <counter>INSTRUCTION</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.80</minimum>
-                    </limit>
-                    <limit>
-                      <counter>BRANCH</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.70</minimum>
-                    </limit>
-                  </limits>
-                </rule>
-              </rules>
-              <dataFile>${project.build.directory}/jacoco-user.exec</dataFile>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

@@ -1,53 +1,29 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8000
   servlet:
     context-path: /api/v1
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/polypadel}
-    username: ${SPRING_DATASOURCE_USERNAME:polypadel}
-    password: ${SPRING_DATASOURCE_PASSWORD:changeme}
+    url: jdbc:sqlite:padel_corpo.db
+    driver-class-name: org.sqlite.JDBC
   jpa:
     hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          lob:
-            non_contextual_creation: true
+      ddl-auto: update
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    show-sql: false
   servlet:
     multipart:
       max-file-size: 2MB
       max-request-size: 2MB
 
-security:
+app:
   jwt:
-    secret: ${JWT_SECRET:REPLACE_ME}
-    expHours: ${JWT_EXP_HOURS:24}
+    secret: ${JWT_SECRET:mySecretKeyForJWTTokenGeneration2025PolyPadel}
+    expiration-hours: 24
   lockout:
-    maxAttempts: ${SECURITY_LOCKOUT_MAX_ATTEMPTS:3}
-    durationMinutes: ${SECURITY_LOCKOUT_DURATION_MINUTES:30}
-  cookie:
-    secure: ${SECURITY_COOKIE_SECURE:false}
-  token:
-    cleanup:
-      enabled: ${SECURITY_TOKEN_CLEANUP_ENABLED:true}
-    revoked-retention-days: ${SECURITY_TOKEN_REVOKED_RETENTION_DAYS:7}
+    max-attempts: 5
+    duration-minutes: 30
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
-
-app:
-  test:
-    enabled: ${APP_TEST_ENABLED:false}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  endpoint:
-    health:
-      show-details: when-authorized
+  allowed-origins: http://localhost:5173
