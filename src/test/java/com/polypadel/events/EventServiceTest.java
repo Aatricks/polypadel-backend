@@ -1,12 +1,15 @@
 package com.polypadel.events;
 
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.domain.entity.Evenement;
+import com.polypadel.domain.enums.MatchStatus;
+import com.polypadel.equipes.repository.EquipeRepository;
 import com.polypadel.events.dto.EventCreateRequest;
 import com.polypadel.events.dto.EventResponse;
 import com.polypadel.events.dto.EventUpdateRequest;
+import com.polypadel.events.mapper.EventMapper;
 import com.polypadel.events.repository.EventRepository;
 import com.polypadel.events.service.EventService;
-import com.polypadel.events.mapper.EventMapper;
 import com.polypadel.matches.repository.MatchRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -14,6 +17,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,16 +26,22 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 public class EventServiceTest {
 
     @Test
-    void create_with_invalid_dates_throws() {
+    void create_with_past_date_throws() {
         var eventRepo = Mockito.mock(EventRepository.class);
         var matchRepo = Mockito.mock(MatchRepository.class);
-        EventService svc = new EventService(eventRepo, matchRepo, Mockito.mock(EventMapper.class));
+        var equipeRepo = Mockito.mock(EquipeRepository.class); // <--- Nouveau Mock
+        var mapper = Mockito.mock(EventMapper.class);
+        
+        EventService svc = new EventService(eventRepo, matchRepo, equipeRepo, mapper);
 
-        EventCreateRequest req = new EventCreateRequest(LocalDate.now(), LocalDate.now().minusDays(1));
+        // Test : Date dans le passé
+        EventCreateRequest req = new EventCreateRequest(LocalDate.now().minusDays(1), LocalTime.of(10, 0), new ArrayList<>());
 
         assertThrows(BusinessException.class, () -> svc.create(req));
     }
@@ -39,99 +50,131 @@ public class EventServiceTest {
     void create_ok() {
         var eventRepo = Mockito.mock(EventRepository.class);
         var matchRepo = Mockito.mock(MatchRepository.class);
+        var equipeRepo = Mockito.mock(EquipeRepository.class);
         var mapper = Mockito.mock(EventMapper.class);
-        EventService svc = new EventService(eventRepo, matchRepo, mapper);
+        
+        EventService svc = new EventService(eventRepo, matchRepo, equipeRepo, mapper);
 
-        EventCreateRequest req = new EventCreateRequest(LocalDate.now(), LocalDate.now().plusDays(1));
-        var e = new com.polypadel.domain.entity.Evenement(); e.setId(UUID.randomUUID()); e.setDateDebut(req.dateDebut()); e.setDateFin(req.dateFin());
+        // DTO avec Date future et Heure
+        EventCreateRequest req = new EventCreateRequest(LocalDate.now().plusDays(1), LocalTime.of(10, 0), new ArrayList<>());
+        
+        Evenement e = new Evenement(); 
+        e.setId(UUID.randomUUID()); 
+        e.setEventDate(req.eventDate()); 
+        e.setEventTime(req.eventTime());
+        
         Mockito.when(eventRepo.save(Mockito.any())).thenReturn(e);
-        Mockito.when(mapper.toResponse(e)).thenReturn(new EventResponse(e.getId(), e.getDateDebut(), e.getDateFin()));
+        // Simulation du Mapper
+        Mockito.when(mapper.toResponse(e)).thenReturn(new EventResponse(e.getId(), e.getEventDate(), e.getEventTime(), new ArrayList<>()));
 
         EventResponse resp = svc.create(req);
+        
         assertThat(resp).isNotNull();
-        assertThat(resp.dateDebut()).isEqualTo(req.dateDebut());
+        assertThat(resp.eventDate()).isEqualTo(req.eventDate());
     }
 
     @Test
     void update_ok() {
         var eventRepo = Mockito.mock(EventRepository.class);
         var matchRepo = Mockito.mock(MatchRepository.class);
+        var equipeRepo = Mockito.mock(EquipeRepository.class);
         var mapper = Mockito.mock(EventMapper.class);
-        EventService svc = new EventService(eventRepo, matchRepo, mapper);
+        
+        EventService svc = new EventService(eventRepo, matchRepo, equipeRepo, mapper);
 
-        EventUpdateRequest req = new EventUpdateRequest(LocalDate.now().plusDays(5), LocalDate.now().plusDays(6));
-        var id = UUID.randomUUID();
-        var e = new com.polypadel.domain.entity.Evenement(); e.setId(id); e.setDateDebut(LocalDate.now()); e.setDateFin(LocalDate.now().plusDays(1));
+        // Update Request avec nouveaux champs
+        EventUpdateRequest req = new EventUpdateRequest(LocalDate.now().plusDays(5), LocalTime.of(14, 0));
+        UUID id = UUID.randomUUID();
+        
+        Evenement e = new Evenement(); 
+        e.setId(id); 
+        e.setEventDate(LocalDate.now()); 
+        e.setEventTime(LocalTime.of(10, 0));
+        
         Mockito.when(eventRepo.findById(id)).thenReturn(Optional.of(e));
         Mockito.when(eventRepo.save(Mockito.any())).thenAnswer(i -> i.getArgument(0));
-        Mockito.when(mapper.toResponse(Mockito.any())).thenReturn(new EventResponse(id, req.dateDebut(), req.dateFin()));
+        Mockito.when(mapper.toResponse(Mockito.any())).thenReturn(new EventResponse(id, req.eventDate(), req.eventTime(), new ArrayList<>()));
 
         EventResponse resp = svc.update(id, req);
-        assertThat(resp.dateDebut()).isEqualTo(req.dateDebut());
+        
+        assertThat(resp.eventDate()).isEqualTo(req.eventDate());
+        assertThat(resp.eventTime()).isEqualTo(req.eventTime());
     }
 
     @Test
     void update_not_found_throws() {
         var eventRepo = Mockito.mock(EventRepository.class);
         var matchRepo = Mockito.mock(MatchRepository.class);
+        var equipeRepo = Mockito.mock(EquipeRepository.class);
         var mapper = Mockito.mock(EventMapper.class);
-        EventService svc = new EventService(eventRepo, matchRepo, mapper);
+        EventService svc = new EventService(eventRepo, matchRepo, equipeRepo, mapper);
 
-        EventUpdateRequest req = new EventUpdateRequest(LocalDate.now().plusDays(5), LocalDate.now().plusDays(6));
-        var id = UUID.randomUUID();
+        EventUpdateRequest req = new EventUpdateRequest(LocalDate.now().plusDays(5), LocalTime.of(12, 0));
+        UUID id = UUID.randomUUID();
         Mockito.when(eventRepo.findById(id)).thenReturn(Optional.empty());
-        org.junit.jupiter.api.Assertions.assertThrows(java.util.NoSuchElementException.class, () -> svc.update(id, req));
+        
+        // On s'attend à une BusinessException "EVENT_NOT_FOUND" (selon votre nouveau code)
+        assertThrows(BusinessException.class, () -> svc.update(id, req));
     }
 
     @Test
-    void create_with_null_dates_throws() {
+    void delete_ok_and_delete_fails_when_has_started_matches() {
         var eventRepo = Mockito.mock(EventRepository.class);
         var matchRepo = Mockito.mock(MatchRepository.class);
-        EventService svc = new EventService(eventRepo, matchRepo, Mockito.mock(EventMapper.class));
-
-        EventCreateRequest reqNullStart = new EventCreateRequest(null, LocalDate.now());
-        assertThrows(BusinessException.class, () -> svc.create(reqNullStart));
-
-        EventCreateRequest reqNullEnd = new EventCreateRequest(LocalDate.now(), null);
-        assertThrows(BusinessException.class, () -> svc.create(reqNullEnd));
-    }
-
-    @Test
-    void delete_ok_and_delete_fails_when_has_matches() {
-        var eventRepo = Mockito.mock(EventRepository.class);
-        var matchRepo = Mockito.mock(MatchRepository.class);
+        var equipeRepo = Mockito.mock(EquipeRepository.class);
         var mapper = Mockito.mock(EventMapper.class);
-        EventService svc = new EventService(eventRepo, matchRepo, mapper);
+        EventService svc = new EventService(eventRepo, matchRepo, equipeRepo, mapper);
 
         UUID id = UUID.randomUUID();
-        Mockito.when(matchRepo.countByEvenementId(id)).thenReturn(0L);
+
+        // Cas 1 : Suppression OK (Pas de matchs terminés ou en cours)
+        Mockito.when(matchRepo.existsByEvenementIdAndStatut(id, MatchStatus.TERMINE)).thenReturn(false);
+        Mockito.when(matchRepo.existsByEvenementIdAndStatut(id, MatchStatus.EN_COURS)).thenReturn(false);
+        
         svc.delete(id);
         Mockito.verify(eventRepo).deleteById(id);
 
-        Mockito.when(matchRepo.countByEvenementId(id)).thenReturn(2L);
-        assertThatThrownBy(() -> svc.delete(id)).isInstanceOf(BusinessException.class)
-            .satisfies(e -> assertThat(((BusinessException) e).getCode()).isEqualTo("EVENT_HAS_MATCHES"));
+        // Cas 2 : Suppression KO (Il y a des matchs terminés)
+        Mockito.when(matchRepo.existsByEvenementIdAndStatut(id, MatchStatus.TERMINE)).thenReturn(true);
+        
+        assertThatThrownBy(() -> svc.delete(id))
+            .isInstanceOf(BusinessException.class)
+            .satisfies(e -> assertThat(((BusinessException) e).getCode()).isEqualTo("EVENT_DELETE_FORBIDDEN"));
     }
 
     @Test
     void get_list_and_calendar_map_properly() {
         var eventRepo = Mockito.mock(EventRepository.class);
         var matchRepo = Mockito.mock(MatchRepository.class);
+        var equipeRepo = Mockito.mock(EquipeRepository.class);
         var mapper = Mockito.mock(EventMapper.class);
-        EventService svc = new EventService(eventRepo, matchRepo, mapper);
+        EventService svc = new EventService(eventRepo, matchRepo, equipeRepo, mapper);
 
         UUID id = UUID.randomUUID();
-        var e = new com.polypadel.domain.entity.Evenement(); e.setId(id); e.setDateDebut(LocalDate.now()); e.setDateFin(LocalDate.now().plusDays(1));
+        Evenement e = new Evenement(); 
+        e.setId(id); 
+        e.setEventDate(LocalDate.now());
+        e.setEventTime(LocalTime.of(10, 0));
+
+        // Test GET
         Mockito.when(eventRepo.findById(id)).thenReturn(Optional.of(e));
-        Mockito.when(mapper.toResponse(e)).thenReturn(new EventResponse(id, e.getDateDebut(), e.getDateFin()));
+        Mockito.when(mapper.toResponse(e)).thenReturn(new EventResponse(id, e.getEventDate(), e.getEventTime(), new ArrayList<>()));
         assertThat(svc.get(id)).isNotNull();
 
-        Mockito.when(eventRepo.findAll(Mockito.any(Pageable.class))).thenReturn(new PageImpl<>(List.of(e)));
-        Mockito.when(mapper.toResponseList(Mockito.any())).thenReturn(List.of(new EventResponse(id, e.getDateDebut(), e.getDateFin())));
+        // Test LIST
+      //  Mockito.when(eventRepository(eventRepo.findAll(Mockito.any(Pageable.class))).thenReturn(new PageImpl<>(List.of(e)));
+        // Note: La méthode toResponse peut être appelée par map()
         assertThat(svc.list(Pageable.unpaged())).hasSize(1);
 
-        Mockito.when(eventRepo.findInRange(Mockito.any(), Mockito.any())).thenReturn(List.of(e));
-        Mockito.when(mapper.toResponseList(Mockito.any())).thenReturn(List.of(new EventResponse(id, e.getDateDebut(), e.getDateFin())));
+        // Test CALENDAR (Nouvelle méthode de repository)
+        Mockito.when(eventRepo.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(any(), any())).thenReturn(List.of(e));
+       // Mockito.when(mapper.toResponseList(any())).thenReturn(List.of(new EventResponse(id, e.getEventDate(), e.getEventTime(), new ArrayList<>()));
+        
         assertThat(svc.calendar(LocalDate.now(), LocalDate.now().plusDays(3))).hasSize(1);
+    }
+    
+    // Helper pour cast le mock plus facilement dans la ligne complexe
+    private org.springframework.data.domain.Page<Evenement> eventRepository(org.springframework.data.domain.Page<Evenement> page) {
+        return page;
     }
 }

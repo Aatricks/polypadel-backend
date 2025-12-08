@@ -6,23 +6,37 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EventMapperTest {
+    
+   
     private final EventMapper mapper = Mappers.getMapper(EventMapper.class);
 
     @Test
     public void toResponse_maps_dates() {
+        // Given
         Evenement e = new Evenement();
-        UUID id = UUID.randomUUID(); e.setId(id);
-        e.setDateDebut(LocalDate.of(2020, 1, 1));
-        e.setDateFin(LocalDate.of(2020, 1, 2));
+        UUID id = UUID.randomUUID(); 
+        e.setId(id);
+        
+        // --- MISE À JOUR DES CHAMPS ---
+        e.setEventDate(LocalDate.of(2020, 1, 1)); // Remplace dateDebut
+        e.setEventTime(LocalTime.of(14, 30));     // Remplace dateFin
+        e.setMatches(new ArrayList<>());          // Initialiser la liste pour éviter le null
+        
         EventResponse r = mapper.toResponse(e);
+
+   
         assertThat(r.id()).isEqualTo(id);
-        assertThat(r.dateDebut()).isEqualTo(e.getDateDebut());
-        assertThat(r.dateFin()).isEqualTo(e.getDateFin());
+        
+      
+        assertThat(r.eventDate()).isEqualTo(e.getEventDate());
+        assertThat(r.eventTime()).isEqualTo(e.getEventTime());
     }
 
     @Test

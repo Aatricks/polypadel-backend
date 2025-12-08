@@ -1,9 +1,10 @@
 package com.polypadel.events.dto;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public record EventUpdateRequest(
-    @NotNull LocalDate dateDebut,
-    @NotNull LocalDate dateFin
+    
+    LocalDate eventDate,
+    LocalTime eventTime
 ) {}

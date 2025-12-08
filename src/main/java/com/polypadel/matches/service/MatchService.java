@@ -10,16 +10,19 @@ import com.polypadel.events.repository.EventRepository;
 import com.polypadel.joueurs.repository.JoueurRepository;
 import com.polypadel.matches.dto.MatchCreateRequest;
 import com.polypadel.matches.dto.MatchResponse;
-import com.polypadel.matches.dto.MatchUpdateScoreRequest;
-import com.polypadel.matches.mapper.MatchMapper;
+import com.polypadel.matches.dto.MatchUpdateRequest;
 import com.polypadel.matches.repository.MatchRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class MatchService {
@@ -28,36 +31,77 @@ public class MatchService {
     private final EventRepository eventRepository;
     private final EquipeRepository equipeRepository;
     private final JoueurRepository joueurRepository;
-    private final MatchMapper matchMapper;
 
     public MatchService(MatchRepository matchRepository,
                         EventRepository eventRepository,
                         EquipeRepository equipeRepository,
-                        JoueurRepository joueurRepository,
-                        MatchMapper matchMapper) {
+                        JoueurRepository joueurRepository) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
         this.equipeRepository = equipeRepository;
         this.joueurRepository = joueurRepository;
-        this.matchMapper = matchMapper;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchResponse> searchMatches(boolean upcoming, boolean myMatches, UUID teamId, String statusStr) {
+        List<Match> matches;
+
+        if (myMatches) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            UUID userId = UUID.fromString(auth.getName());
+            var joueur = joueurRepository.findByUtilisateurId(userId)
+                    .orElseThrow(() -> new BusinessException("USER_NOT_PLAYER", "L'utilisateur n'est pas un joueur"));
+            List<UUID> teamIds = equipeRepository.findIdsByPlayer(joueur.getId());
+
+            if (teamIds.isEmpty()) return List.of();
+            matches = matchRepository.findByEquipe1IdInOrEquipe2IdIn(teamIds, teamIds);
+        } else if (teamId != null) {
+            matches = matchRepository.findByEquipe1IdOrEquipe2Id(teamId, teamId);
+        } else {
+            matches = matchRepository.findAll();
+        }
+
+        return matches.stream()
+                .filter(m -> {
+                    if (statusStr != null && !statusStr.isBlank()) {
+                        return m.getStatut().name().equals(statusStr);
+                    }
+                    return true;
+                })
+                .filter(m -> {
+                    if (upcoming) {
+                        LocalDateTime now = LocalDateTime.now();
+                        LocalDateTime limit = now.plusDays(30);
+                        
+                        LocalDate date = m.getEvenement().getEventDate();
+                        LocalTime time = m.getStartTime();
+                        LocalDateTime matchDateTime = date.atTime(time);
+
+                        return matchDateTime.isAfter(now) && matchDateTime.isBefore(limit);
+                    }
+                    return true;
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public MatchResponse create(MatchCreateRequest req) {
         if (req.equipe1Id().equals(req.equipe2Id())) {
-            throw new BusinessException("MATCH_TEAMS_SAME", "Teams must be different");
+            throw new BusinessException("MATCH_TEAMS_SAME", "Les équipes doivent être différentes");
         }
         Evenement event = eventRepository.findById(req.evenementId()).orElseThrow();
         Equipe t1 = equipeRepository.findById(req.equipe1Id()).orElseThrow();
         Equipe t2 = equipeRepository.findById(req.equipe2Id()).orElseThrow();
 
-        if (matchRepository.existsByEvenementIdAndPisteAndStartTime(event.getId(), req.piste(), req.startTime())) {
-            throw new BusinessException("MATCH_SLOT_TAKEN", "This time slot and piste are already used");
+        LocalTime time = req.startTime().toLocalTime();
+
+        if (matchRepository.existsByEvenementIdAndPisteAndStartTime(event.getId(), req.piste(), time)) {
+            throw new BusinessException("MATCH_SLOT_TAKEN", "Ce créneau et cette piste sont déjà pris");
         }
 
-        if (matchRepository.existsByEvenementIdAndEquipe1IdOrEvenementIdAndEquipe2Id(event.getId(), t1.getId(), event.getId(), t1.getId()) ||
-            matchRepository.existsByEvenementIdAndEquipe1IdOrEvenementIdAndEquipe2Id(event.getId(), t2.getId(), event.getId(), t2.getId())) {
-            throw new BusinessException("TEAM_ALREADY_IN_EVENT", "A team can only play once in an event");
+        if (isTeamBusy(event.getId(), t1.getId()) || isTeamBusy(event.getId(), t2.getId())) {
+            throw new BusinessException("TEAM_ALREADY_IN_EVENT", "Une équipe ne peut jouer qu'une fois par événement");
         }
 
         Match m = new Match();
@@ -65,49 +109,85 @@ public class MatchService {
         m.setEquipe1(t1);
         m.setEquipe2(t2);
         m.setPiste(req.piste());
-        m.setStartTime(req.startTime());
+        m.setStartTime(time);
         m.setStatut(MatchStatus.A_VENIR);
-        return matchMapper.toResponse(matchRepository.save(m));
+        
+        return toResponse(matchRepository.save(m));
     }
 
     @Transactional
-    public MatchResponse updateScore(UUID id, MatchUpdateScoreRequest req) {
-        Match m = matchRepository.findById(id).orElseThrow();
-        if (req.statut() != null) {
-            m.setStatut(req.statut());
+    public MatchResponse update(UUID id, MatchUpdateRequest req) {
+        Match m = matchRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("MATCH_NOT_FOUND", "Match introuvable"));
+
+        if (req.courtNumber() != null && !req.courtNumber().equals(m.getPiste())) {
+            boolean busy = matchRepository.existsByEvenementIdAndPisteAndStartTime(
+                    m.getEvenement().getId(), req.courtNumber(), m.getStartTime());
+            if (busy) {
+                throw new BusinessException("MATCH_SLOT_TAKEN", "La piste " + req.courtNumber() + " est déjà occupée");
+            }
+            m.setPiste(req.courtNumber());
         }
+
+        if (req.status() != null) {
+            m.setStatut(req.status());
+        }
+
+        if (req.scoreTeam1() != null) m.setScore1(req.scoreTeam1());
+        if (req.scoreTeam2() != null) m.setScore2(req.scoreTeam2());
+
         if (m.getStatut() == MatchStatus.TERMINE) {
-            ScoreValidator.validate(req.score1(), req.score2());
+            if (m.getScore1() == null || m.getScore2() == null) {
+                throw new BusinessException("SCORE_MISSING", "Les scores sont obligatoires pour un match terminé");
+            }
+            ScoreValidator.validate(m.getScore1(), m.getScore2());
         }
-        if (req.score1() != null) m.setScore1(req.score1());
-        if (req.score2() != null) m.setScore2(req.score2());
-        return matchMapper.toResponse(matchRepository.save(m));
+
+        return toResponse(matchRepository.save(m));
     }
 
-    @Transactional(readOnly = true)
-    public List<MatchResponse> upcomingForCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UUID userId = UUID.fromString(auth.getName());
-        var joueur = joueurRepository.findByUtilisateurId(userId).orElseThrow();
-        var teamIds = equipeRepository.findIdsByPlayer(joueur.getId());
-        if (teamIds.isEmpty()) return List.of();
-        var statuses = List.of(MatchStatus.A_VENIR, MatchStatus.EN_COURS);
-        return matchRepository.findUpcomingForTeams(statuses, teamIds).stream().map(matchMapper::toResponse).toList();
+    @Transactional
+    public void delete(UUID id) {
+        Match m = matchRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("MATCH_NOT_FOUND", "Match introuvable"));
+
+        if (m.getStatut() != MatchStatus.A_VENIR) {
+            throw new BusinessException("DELETE_FORBIDDEN", "Impossible de supprimer un match terminé ou annulé");
+        }
+
+        matchRepository.delete(m);
     }
 
     @Transactional(readOnly = true)
     public List<MatchResponse> listByEvent(UUID eventId) {
-        return matchRepository.findByEvenementIdOrderByStartTimeAsc(eventId).stream().map(matchMapper::toResponse).toList();
+        return matchRepository.findByEvenementIdOrderByStartTimeAsc(eventId)
+                .stream().map(this::toResponse).toList();
     }
-
+    
     @Transactional(readOnly = true)
     public List<MatchResponse> finishedForCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UUID userId = UUID.fromString(auth.getName());
-        var joueur = joueurRepository.findByUtilisateurId(userId).orElseThrow();
-        var teamIds = equipeRepository.findIdsByPlayer(joueur.getId());
-        if (teamIds.isEmpty()) return List.of();
-        var statuses = List.of(MatchStatus.TERMINE);
-        return matchRepository.findUpcomingForTeams(statuses, teamIds).stream().map(matchMapper::toResponse).toList();
+        return searchMatches(false, true, null, "TERMINE");
+    }
+
+    private boolean isTeamBusy(UUID eventId, UUID teamId) {
+        return matchRepository.existsByEvenementIdAndEquipe1IdOrEvenementIdAndEquipe2Id(eventId, teamId, eventId, teamId);
+    }
+
+    private MatchResponse toResponse(Match m) {
+        MatchResponse r = new MatchResponse();
+        r.id = m.getId();
+        r.evenementId = m.getEvenement().getId();
+        r.equipe1Id = m.getEquipe1().getId();
+        r.equipe2Id = m.getEquipe2().getId();
+        r.piste = m.getPiste();
+        
+        if (m.getEvenement() != null) {
+             r.startTime = m.getEvenement().getEventDate().atTime(m.getStartTime());
+        }
+        
+        r.statut = m.getStatut();
+        r.score1 = m.getScore1();
+        r.score2 = m.getScore2();
+        return r;
     }
 }

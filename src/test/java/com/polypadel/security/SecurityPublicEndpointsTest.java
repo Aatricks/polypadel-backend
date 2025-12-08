@@ -86,11 +86,6 @@ public class SecurityPublicEndpointsTest {
             };
         }
 
-        // Provide a minimal EventService bean so EventController can be created; methods won't be hit in these tests
-        @Bean
-            @Primary
-            EventService eventService() {
-            return new EventService(null, null, null) { };
-        }
+        
     }
 }
