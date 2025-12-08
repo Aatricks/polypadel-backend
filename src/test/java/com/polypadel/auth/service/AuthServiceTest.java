@@ -165,5 +165,56 @@ public class AuthServiceTest {
         assertEquals(0, u.getFailedLoginAttempts());
         assertNull(u.getLockoutUntil());
     }
+
+    @Test
+    void login_visiteur_role_throws() {
+        Utilisateur u = new Utilisateur();
+        u.setActive(true);
+        u.setRole(Role.VISITEUR);
+        Mockito.when(utilisateurRepository.findByEmail(any(String.class))).thenReturn(Optional.of(u));
+        BusinessException ex = assertThrows(BusinessException.class, () -> authService.login("x", "y"));
+        assertEquals("AUTH_MISSING_ROLE", ex.getCode());
+    }
+
+    @Test
+    void register_successful_returns_token() {
+        com.polypadel.auth.dto.RegisterRequest req = new com.polypadel.auth.dto.RegisterRequest(
+            "new@example.com", "ValidP@ss1", "ValidP@ss1"
+        );
+        Mockito.when(utilisateurRepository.findByEmail(any(String.class))).thenReturn(Optional.empty());
+        Mockito.when(passwordEncoder.encode(any(String.class))).thenReturn("encodedHash");
+        Mockito.when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> {
+            Utilisateur saved = invocation.getArgument(0);
+            saved.setId(UUID.randomUUID());
+            return saved;
+        });
+        Mockito.when(jwtService.generateToken(any(UUID.class), any(String.class), any(Role.class))).thenReturn("newtoken");
+
+        LoginResponse resp = authService.register(req);
+        assertEquals("newtoken", resp.token());
+        assertEquals("new@example.com", resp.user().email());
+    }
+
+    @Test
+    void register_passwords_do_not_match_throws() {
+        com.polypadel.auth.dto.RegisterRequest req = new com.polypadel.auth.dto.RegisterRequest(
+            "new@example.com", "ValidP@ss1", "Different"
+        );
+        BusinessException ex = assertThrows(BusinessException.class, () -> authService.register(req));
+        assertEquals("AUTH_PASSWORDS_DO_NOT_MATCH", ex.getCode());
+    }
+
+    @Test
+    void register_email_already_exists_throws() {
+        com.polypadel.auth.dto.RegisterRequest req = new com.polypadel.auth.dto.RegisterRequest(
+            "existing@example.com", "ValidP@ss1", "ValidP@ss1"
+        );
+        Utilisateur existing = new Utilisateur();
+        existing.setEmail("existing@example.com");
+        Mockito.when(utilisateurRepository.findByEmail(any(String.class))).thenReturn(Optional.of(existing));
+        
+        BusinessException ex = assertThrows(BusinessException.class, () -> authService.register(req));
+        assertEquals("AUTH_EMAIL_ALREADY_EXISTS", ex.getCode());
+    }
     
 }

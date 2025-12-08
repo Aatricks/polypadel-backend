@@ -1,7 +1,6 @@
 package com.polypadel.security.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -10,27 +9,16 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Map;
 
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)
-            throws IOException, ServletException {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        Map<String, Object> body = Map.of(
-                "timestamp", Instant.now().toString(),
-                "path", request.getRequestURI(),
-                "status", 403,
-                "error", "Forbidden",
-                "code", "AUTH_FORBIDDEN",
-                "message", accessDeniedException.getMessage()
-        );
-        objectMapper.writeValue(response.getOutputStream(), body);
+    public void handle(HttpServletRequest req, HttpServletResponse resp, AccessDeniedException ex) throws IOException {
+        resp.setStatus(403);
+        resp.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        mapper.writeValue(resp.getOutputStream(), Map.of("status", 403, "code", "FORBIDDEN", "message", ex.getMessage()));
     }
 }

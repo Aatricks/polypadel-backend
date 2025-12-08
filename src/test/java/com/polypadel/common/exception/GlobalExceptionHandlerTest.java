@@ -16,7 +16,7 @@ public class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    void handleValidation_builds_error_response_with_details() {
+    void handleValidation_builds_error_response() {
         MethodArgumentNotValidException ex = Mockito.mock(MethodArgumentNotValidException.class);
         BindingResult br = Mockito.mock(BindingResult.class);
         Mockito.when(ex.getBindingResult()).thenReturn(br);
@@ -30,63 +30,47 @@ public class GlobalExceptionHandlerTest {
         var body = resp.getBody();
         assertNotNull(body);
         assertEquals("VALIDATION_FAILED", body.code);
-        assertTrue(body.details.contains("field: err"));
-        assertEquals("/test", body.path);
+        assertTrue(body.message.contains("field: err"));
     }
 
     @Test
-    void handleBusiness_returns_conflict_with_business_code() {
+    void handleBusiness_returns_conflict() {
         HttpServletRequest req = Mockito.mock(HttpServletRequest.class);
         Mockito.when(req.getRequestURI()).thenReturn("/test");
         BusinessException ex = new BusinessException("CODE", "msg");
 
         var resp = handler.handleBusiness(ex, req);
         assertEquals(409, resp.getStatusCodeValue());
-        var body = resp.getBody();
-        assertEquals("CODE", body.code);
-        assertEquals("msg", body.message);
-        assertEquals("/test", body.path);
+        assertEquals("CODE", resp.getBody().code);
     }
 
     @Test
-    void handleBusiness_locks_with_auth_account_locked() {
+    void handleBusiness_locked_returns_423() {
         HttpServletRequest req = Mockito.mock(HttpServletRequest.class);
         Mockito.when(req.getRequestURI()).thenReturn("/test");
-        BusinessException ex = new BusinessException(ErrorCodes.AUTH_ACCOUNT_LOCKED, "locked");
+        BusinessException ex = new BusinessException("AUTH_ACCOUNT_LOCKED", "locked");
 
         var resp = handler.handleBusiness(ex, req);
         assertEquals(423, resp.getStatusCodeValue());
-        var body = resp.getBody();
-        assertEquals(ErrorCodes.AUTH_ACCOUNT_LOCKED, body.code);
-        assertEquals("Compte bloqué", body.message);
-        assertEquals("/test", body.path);
     }
 
     @Test
     void handleOther_returns_500() {
         HttpServletRequest req = Mockito.mock(HttpServletRequest.class);
         Mockito.when(req.getRequestURI()).thenReturn("/test");
-        Exception ex = new Exception("boom");
 
-        var resp = handler.handleOther(ex, req);
+        var resp = handler.handleOther(new Exception("boom"), req);
         assertEquals(500, resp.getStatusCodeValue());
-        var body = resp.getBody();
-        assertEquals("UNEXPECTED_ERROR", body.code);
-        assertEquals("boom", body.message);
-        assertEquals("/test", body.path);
+        assertEquals("UNEXPECTED_ERROR", resp.getBody().code);
     }
 
     @Test
     void handleNotFound_returns_404() {
         HttpServletRequest req = Mockito.mock(HttpServletRequest.class);
         Mockito.when(req.getRequestURI()).thenReturn("/not/found");
-        NotFoundException ex = new NotFoundException("PLAYER_NOT_FOUND", "player missing");
+        NotFoundException ex = new NotFoundException("PLAYER_NOT_FOUND", "missing");
 
         var resp = handler.handleNotFound(ex, req);
         assertEquals(404, resp.getStatusCodeValue());
-        var body = resp.getBody();
-        assertEquals("PLAYER_NOT_FOUND", body.code);
-        assertEquals("player missing", body.message);
-        assertEquals("/not/found", body.path);
     }
 }

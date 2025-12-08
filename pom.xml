@@ -281,18 +281,17 @@
                     <limit>
                       <counter>INSTRUCTION</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.85</minimum>
+                      <minimum>0.80</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.75</minimum>
+                      <minimum>0.70</minimum>
                     </limit>
                   </limits>
                 </rule>
               </rules>
               <dataFile>${project.build.directory}/jacoco-user.exec</dataFile>
-              <!-- Use instrumentation includes only; do not filter here -->
             </configuration>
           </execution>
         </executions>

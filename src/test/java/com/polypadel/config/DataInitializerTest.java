@@ -45,9 +45,9 @@ public class DataInitializerTest {
         when(joueurRepository.count()).thenReturn(0L);
         dataInitializer.run();
         verify(joueurRepository).saveAll(any());
-        verify(pouleRepository).saveAll(any());
+        verify(pouleRepository).save(any());
         verify(equipeRepository).saveAll(any());
         verify(eventRepository).save(any());
-        verify(matchRepository).saveAll(any());
+        verify(matchRepository).save(any());
     }
 }
