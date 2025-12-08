@@ -4,6 +4,7 @@ import com.polypadel.dto.*;
 import com.polypadel.model.User;
 import com.polypadel.service.MatchService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,11 @@ public class MatchController {
     @GetMapping("/{id}")
     public ResponseEntity<MatchResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(matchService.findById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<MatchResponse> create(@Valid @RequestBody MatchCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(matchService.create(request));
     }
 
     @PutMapping("/{id}")

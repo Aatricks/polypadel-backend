@@ -13,10 +13,15 @@ import java.util.List;
 public class MatchService {
     private final MatchRepository matchRepository;
     private final TeamService teamService;
+    private final TeamRepository teamRepository;
+    private final EventRepository eventRepository;
 
-    public MatchService(MatchRepository matchRepository, TeamService teamService) {
+    public MatchService(MatchRepository matchRepository, TeamService teamService,
+                       TeamRepository teamRepository, EventRepository eventRepository) {
         this.matchRepository = matchRepository;
         this.teamService = teamService;
+        this.teamRepository = teamRepository;
+        this.eventRepository = eventRepository;
     }
 
     public List<MatchResponse> findUpcoming(Long teamId, Boolean myMatches, User currentUser) {
@@ -34,6 +39,28 @@ public class MatchService {
     public MatchResponse findById(Long id) {
         return toResponse(matchRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Match non trouvé")));
+    }
+
+    public MatchResponse create(MatchCreateRequest request) {
+        Event event = eventRepository.findById(request.eventId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Événement non trouvé"));
+        Team team1 = teamRepository.findById(request.team1Id())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe 1 non trouvée"));
+        Team team2 = teamRepository.findById(request.team2Id())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe 2 non trouvée"));
+
+        if (team1.getId().equals(team2.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Les deux équipes doivent être différentes");
+        }
+
+        Match match = new Match();
+        match.setEvent(event);
+        match.setTeam1(team1);
+        match.setTeam2(team2);
+        match.setCourtNumber(request.courtNumber());
+        match.setStatus(MatchStatus.A_VENIR);
+
+        return toResponse(matchRepository.save(match));
     }
 
     public MatchResponse update(Long id, MatchUpdateRequest request) {
@@ -61,7 +88,7 @@ public class MatchService {
         matchRepository.delete(match);
     }
 
-    private MatchResponse toResponse(Match m) {
+    public MatchResponse toResponse(Match m) {
         return new MatchResponse(m.getId(),
             new MatchResponse.EventInfo(m.getEvent().getEventDate(), m.getEvent().getEventTime()),
             m.getCourtNumber(),
