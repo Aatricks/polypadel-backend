@@ -80,7 +80,7 @@ public class EventServiceTest {
         EventUpdateRequest req = new EventUpdateRequest(LocalDate.now().plusDays(5), LocalDate.now().plusDays(6));
         var id = UUID.randomUUID();
         Mockito.when(eventRepo.findById(id)).thenReturn(Optional.empty());
-        org.junit.jupiter.api.Assertions.assertThrows(java.util.NoSuchElementException.class, () -> svc.update(id, req));
+        org.junit.jupiter.api.Assertions.assertThrows(com.polypadel.common.exception.NotFoundException.class, () -> svc.update(id, req));
     }
 
     @Test

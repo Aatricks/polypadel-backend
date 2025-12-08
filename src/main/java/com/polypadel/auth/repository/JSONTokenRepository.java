@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface JSONTokenRepository extends JpaRepository<JSONToken, UUID> {
 	boolean existsByJtiAndRevokedTrue(String jti);
+	long deleteByExpirationBefore(java.time.Instant instant);
+	long deleteByRevokedTrueAndExpirationBefore(java.time.Instant instant);
 }

@@ -7,7 +7,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "json_token", indexes = {
-        @Index(name = "idx_jsontoken_user", columnList = "utilisateur_id")
+    @Index(name = "idx_jsontoken_user", columnList = "utilisateur_id"),
+    @Index(name = "idx_jsontoken_jti", columnList = "jti")
 })
 public class JSONToken {
 

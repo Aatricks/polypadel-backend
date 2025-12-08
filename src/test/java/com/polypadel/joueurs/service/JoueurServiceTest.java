@@ -113,7 +113,7 @@ public class JoueurServiceTest {
         UUID id = UUID.randomUUID();
         Mockito.when(joueurRepository.findById(eq(id))).thenReturn(Optional.empty());
         PlayerUpdateRequest req = new PlayerUpdateRequest(null, null, null, null, null);
-        assertThrows(java.util.NoSuchElementException.class, () -> service.update(id, req));
+        assertThrows(com.polypadel.common.exception.NotFoundException.class, () -> service.update(id, req));
     }
 
     @Test

@@ -1,6 +1,8 @@
 package com.polypadel.equipes.service;
 
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.common.exception.ErrorCodes;
+import com.polypadel.common.exception.NotFoundException;
 import com.polypadel.domain.entity.Equipe;
 import com.polypadel.domain.entity.Joueur;
 import com.polypadel.domain.entity.Poule;
@@ -37,8 +39,8 @@ public class EquipeService {
 
     @Transactional
     public TeamResponse create(TeamCreateRequest req) {
-        Joueur j1 = joueurRepository.findById(req.joueur1Id()).orElseThrow();
-        Joueur j2 = joueurRepository.findById(req.joueur2Id()).orElseThrow();
+        Joueur j1 = joueurRepository.findById(req.joueur1Id()).orElseThrow(() -> new NotFoundException(ErrorCodes.PLAYER_NOT_FOUND, "Player not found: " + req.joueur1Id()));
+        Joueur j2 = joueurRepository.findById(req.joueur2Id()).orElseThrow(() -> new NotFoundException(ErrorCodes.PLAYER_NOT_FOUND, "Player not found: " + req.joueur2Id()));
         if (!j1.getEntreprise().equals(j2.getEntreprise()) || !j1.getEntreprise().equals(req.entreprise())) {
             throw new BusinessException("TEAM_DIFFERENT_ENTREPRISE", "Players must share enterprise");
         }
@@ -51,7 +53,7 @@ public class EquipeService {
         e.setJoueur1(j1);
         e.setJoueur2(j2);
         if (req.pouleId() != null) {
-            Poule p = pouleRepository.findById(req.pouleId()).orElseThrow();
+            Poule p = pouleRepository.findById(req.pouleId()).orElseThrow(() -> new NotFoundException(ErrorCodes.POULE_NOT_FOUND, "Poule not found: " + req.pouleId()));
             if (equipeRepository.countByPouleId(p.getId()) >= 6) {
                 throw new BusinessException("POULE_SIZE_VIOLATION", "Poule already has 6 teams");
             }
@@ -62,13 +64,13 @@ public class EquipeService {
 
     @Transactional
     public TeamResponse update(UUID id, TeamUpdateRequest req) {
-        Equipe e = equipeRepository.findById(id).orElseThrow();
+        Equipe e = equipeRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.TEAM_NOT_FOUND, "Team not found: " + id));
         ensureNotLocked(id);
         if (req.entreprise() != null) e.setEntreprise(req.entreprise());
-        if (req.joueur1Id() != null) e.setJoueur1(joueurRepository.findById(req.joueur1Id()).orElseThrow());
-        if (req.joueur2Id() != null) e.setJoueur2(joueurRepository.findById(req.joueur2Id()).orElseThrow());
+        if (req.joueur1Id() != null) e.setJoueur1(joueurRepository.findById(req.joueur1Id()).orElseThrow(() -> new NotFoundException(ErrorCodes.PLAYER_NOT_FOUND, "Player not found: " + req.joueur1Id())));
+        if (req.joueur2Id() != null) e.setJoueur2(joueurRepository.findById(req.joueur2Id()).orElseThrow(() -> new NotFoundException(ErrorCodes.PLAYER_NOT_FOUND, "Player not found: " + req.joueur2Id())));
         if (req.pouleId() != null) {
-            Poule p = pouleRepository.findById(req.pouleId()).orElseThrow();
+            Poule p = pouleRepository.findById(req.pouleId()).orElseThrow(() -> new NotFoundException(ErrorCodes.POULE_NOT_FOUND, "Poule not found: " + req.pouleId()));
             if (!p.equals(e.getPoule()) && equipeRepository.countByPouleId(p.getId()) >= 6) {
                 throw new BusinessException("POULE_SIZE_VIOLATION", "Poule already has 6 teams");
             }
@@ -86,9 +88,9 @@ public class EquipeService {
 
     @Transactional
     public TeamResponse assignToPoule(UUID teamId, UUID pouleId) {
-        Equipe e = equipeRepository.findById(teamId).orElseThrow();
+        Equipe e = equipeRepository.findById(teamId).orElseThrow(() -> new NotFoundException(ErrorCodes.TEAM_NOT_FOUND, "Team not found: " + teamId));
         ensureNotLocked(teamId);
-        Poule p = pouleRepository.findById(pouleId).orElseThrow();
+        Poule p = pouleRepository.findById(pouleId).orElseThrow(() -> new NotFoundException(ErrorCodes.POULE_NOT_FOUND, "Poule not found: " + pouleId));
         if (e.getPoule() == null || !p.getId().equals(e.getPoule().getId())) {
             if (equipeRepository.countByPouleId(p.getId()) >= 6) {
                 throw new BusinessException("POULE_SIZE_VIOLATION", "Poule already has 6 teams");
@@ -100,7 +102,7 @@ public class EquipeService {
 
     @Transactional
     public TeamResponse removeFromPoule(UUID teamId) {
-        Equipe e = equipeRepository.findById(teamId).orElseThrow();
+        Equipe e = equipeRepository.findById(teamId).orElseThrow(() -> new NotFoundException(ErrorCodes.TEAM_NOT_FOUND, "Team not found: " + teamId));
         ensureNotLocked(teamId);
         e.setPoule(null);
         return equipeMapper.toResponse(equipeRepository.save(e));
@@ -108,7 +110,7 @@ public class EquipeService {
 
     @Transactional(readOnly = true)
     public TeamResponse get(UUID id) {
-        return equipeMapper.toResponse(equipeRepository.findById(id).orElseThrow());
+        return equipeMapper.toResponse(equipeRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.TEAM_NOT_FOUND, "Team not found: " + id)));
     }
 
     @Transactional(readOnly = true)

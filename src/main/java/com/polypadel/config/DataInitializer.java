@@ -5,6 +5,8 @@ import com.polypadel.domain.enums.MatchStatus;
 import com.polypadel.equipes.repository.EquipeRepository;
 import com.polypadel.events.repository.EventRepository;
 import com.polypadel.joueurs.repository.JoueurRepository;
+import com.polypadel.users.repository.UtilisateurRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.polypadel.matches.repository.MatchRepository;
 import com.polypadel.poules.repository.PouleRepository;
 import org.slf4j.Logger;
@@ -35,16 +37,23 @@ public class DataInitializer implements CommandLineRunner {
     private final EventRepository eventRepository;
     private final MatchRepository matchRepository;
 
+    private final UtilisateurRepository utilisateurRepository;
+    private final PasswordEncoder passwordEncoder;
+
     public DataInitializer(JoueurRepository joueurRepository,
                            EquipeRepository equipeRepository,
                            PouleRepository pouleRepository,
                            EventRepository eventRepository,
-                           MatchRepository matchRepository) {
+                           MatchRepository matchRepository,
+                           UtilisateurRepository utilisateurRepository,
+                           PasswordEncoder passwordEncoder) {
         this.joueurRepository = joueurRepository;
         this.equipeRepository = equipeRepository;
         this.pouleRepository = pouleRepository;
         this.eventRepository = eventRepository;
         this.matchRepository = matchRepository;
+        this.utilisateurRepository = utilisateurRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -119,5 +128,16 @@ public class DataInitializer implements CommandLineRunner {
         matchRepository.saveAll(matches);
 
         log.info("Dev data seeding complete. Players: {} Teams: {}", joueurs.size(), equipes.size());
+        // Create an admin user if not present
+        if (utilisateurRepository.findByEmail("admin@padel.com").isEmpty()) {
+            com.polypadel.domain.entity.Utilisateur admin = new com.polypadel.domain.entity.Utilisateur();
+            admin.setEmail("admin@padel.com");
+            admin.setEmailHash("admin@padel.com");
+            admin.setPasswordHash(passwordEncoder.encode("Admin@2025!"));
+            admin.setRole(com.polypadel.domain.enums.Role.ADMIN);
+            admin.setActive(true);
+            utilisateurRepository.save(admin);
+            log.info("Dev admin user seeded: admin@padel.com");
+        }
     }
 }

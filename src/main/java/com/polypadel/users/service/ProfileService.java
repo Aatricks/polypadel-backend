@@ -1,6 +1,8 @@
 package com.polypadel.users.service;
 
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.common.exception.ErrorCodes;
+import com.polypadel.common.exception.NotFoundException;
 import com.polypadel.domain.entity.Joueur;
 import com.polypadel.domain.entity.Utilisateur;
 import com.polypadel.joueurs.repository.JoueurRepository;
@@ -40,7 +42,7 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public ProfileResponse getProfile() {
         UUID id = currentUserId();
-        Utilisateur u = utilisateurRepository.findById(id).orElseThrow();
+        Utilisateur u = utilisateurRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.USER_NOT_FOUND, "User not found: " + id));
         
         return joueurRepository.findByUtilisateurId(id)
             .map(j -> new ProfileResponse(
@@ -67,7 +69,7 @@ public class ProfileService {
         UUID id = currentUserId();
         Joueur j = joueurRepository.findByUtilisateurId(id).orElseGet(() -> {
             Joueur nj = new Joueur();
-            nj.setUtilisateur(utilisateurRepository.findById(id).orElseThrow());
+            nj.setUtilisateur(utilisateurRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.USER_NOT_FOUND, "User not found: " + id)));
             // entreprise cannot be set here; keep null; admin flow sets it
             nj.setEntreprise("UNSET");
             nj.setNumLicence(UUID.randomUUID().toString());
@@ -87,7 +89,7 @@ public class ProfileService {
     @Transactional
     public void changePassword(PasswordUpdateRequest req) {
         UUID id = currentUserId();
-        Utilisateur u = utilisateurRepository.findById(id).orElseThrow();
+        Utilisateur u = utilisateurRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.USER_NOT_FOUND, "User not found: " + id));
         if (!passwordEncoder.matches(req.currentPassword(), u.getPasswordHash())) {
             throw new BusinessException("PROFILE_PASSWORD_INVALID", "Current password invalid");
         }

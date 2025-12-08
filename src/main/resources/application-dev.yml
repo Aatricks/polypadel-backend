@@ -10,3 +10,7 @@ logging:
   level:
     org.hibernate.SQL: info
     org.hibernate.orm.jdbc.bind: warn
+
+app:
+  test:
+    enabled: true

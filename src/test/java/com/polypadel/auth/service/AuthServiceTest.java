@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,7 +32,7 @@ public class AuthServiceTest {
         utilisateurRepository = Mockito.mock(UtilisateurRepository.class);
         passwordEncoder = Mockito.mock(PasswordEncoder.class);
         jwtService = Mockito.mock(JwtService.class);
-        authService = new AuthService(utilisateurRepository, passwordEncoder, jwtService);
+        authService = new AuthService(utilisateurRepository, passwordEncoder, jwtService, 3, 30);
     }
 
     @Test
@@ -89,4 +91,79 @@ public class AuthServiceTest {
         BusinessException ex = assertThrows(BusinessException.class, () -> authService.login("x", "y"));
         assertEquals("AUTH_INVALID_CREDENTIALS", ex.getCode());
     }
+
+    @Test
+    void login_increments_failed_attempts_and_locks_after_three() {
+        Utilisateur u = new Utilisateur();
+        u.setActive(true);
+        u.setRole(Role.ADMIN);
+        u.setPasswordHash("hash");
+        Mockito.when(utilisateurRepository.findByEmail(any(String.class))).thenReturn(Optional.of(u));
+        Mockito.when(passwordEncoder.matches(any(String.class), any(String.class))).thenReturn(false);
+        Mockito.when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // 1st failed attempt
+        BusinessException ex1 = assertThrows(BusinessException.class, () -> authService.login("x", "y"));
+        assertEquals("AUTH_INVALID_CREDENTIALS", ex1.getCode());
+        assertEquals(1, u.getFailedLoginAttempts());
+
+        // 2nd failed attempt
+        BusinessException ex2 = assertThrows(BusinessException.class, () -> authService.login("x", "y"));
+        assertEquals("AUTH_INVALID_CREDENTIALS", ex2.getCode());
+        assertEquals(2, u.getFailedLoginAttempts());
+
+        // 3rd failed attempt -> account locked
+        BusinessException ex3 = assertThrows(BusinessException.class, () -> authService.login("x", "y"));
+        assertEquals("AUTH_ACCOUNT_LOCKED", ex3.getCode());
+        assertEquals(3, u.getFailedLoginAttempts());
+        assertNotNull(u.getLockoutUntil());
+        assertTrue(u.getLockoutUntil().isAfter(Instant.now()));
+
+        // Subsequent attempt while locked should fail with locked error
+        BusinessException ex4 = assertThrows(BusinessException.class, () -> authService.login("x", "y"));
+        assertEquals("AUTH_ACCOUNT_LOCKED", ex4.getCode());
+    }
+
+    @Test
+    void login_after_lockout_expiry_resets_attempts_and_allows_login() {
+        Utilisateur u = new Utilisateur();
+        u.setActive(true);
+        u.setRole(Role.ADMIN);
+        u.setPasswordHash("hash");
+        u.setId(UUID.randomUUID());
+        u.setEmail("test@example.com");
+        // Simulate previous lockout expired
+        u.setFailedLoginAttempts(3);
+        u.setLockoutUntil(Instant.now().minus(Duration.ofMinutes(1)));
+        Mockito.when(utilisateurRepository.findByEmail(any(String.class))).thenReturn(Optional.of(u));
+        Mockito.when(passwordEncoder.matches(any(String.class), any(String.class))).thenReturn(true);
+        Mockito.when(jwtService.generateToken(any(UUID.class), any(String.class), any(Role.class))).thenReturn("token");
+        Mockito.when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LoginResponse resp = authService.login("test@example.com", "pw");
+        assertEquals("token", resp.token());
+        assertEquals(0, u.getFailedLoginAttempts());
+        assertNull(u.getLockoutUntil());
+    }
+
+    @Test
+    void login_success_resets_failed_attempts() {
+        Utilisateur u = new Utilisateur();
+        u.setActive(true);
+        u.setRole(Role.ADMIN);
+        u.setPasswordHash("hash");
+        u.setFailedLoginAttempts(2);
+        u.setId(UUID.randomUUID());
+        u.setEmail("test@example.com");
+        Mockito.when(utilisateurRepository.findByEmail(any(String.class))).thenReturn(Optional.of(u));
+        Mockito.when(passwordEncoder.matches(any(String.class), any(String.class))).thenReturn(true);
+        Mockito.when(jwtService.generateToken(any(UUID.class), any(String.class), any(Role.class))).thenReturn("token");
+        Mockito.when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LoginResponse resp = authService.login("test@example.com", "pw");
+        assertEquals("token", resp.token());
+        assertEquals(0, u.getFailedLoginAttempts());
+        assertNull(u.getLockoutUntil());
+    }
+    
 }

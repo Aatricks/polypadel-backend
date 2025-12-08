@@ -1,6 +1,8 @@
 package com.polypadel.joueurs.service;
 
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.common.exception.ErrorCodes;
+import com.polypadel.common.exception.NotFoundException;
 import com.polypadel.domain.entity.Joueur;
 import com.polypadel.equipes.repository.EquipeRepository;
 import com.polypadel.joueurs.dto.PlayerCreateRequest;
@@ -49,7 +51,7 @@ public class JoueurService {
 
     @Transactional
     public PlayerResponse update(UUID id, PlayerUpdateRequest req) {
-        Joueur j = joueurRepository.findById(id).orElseThrow();
+        Joueur j = joueurRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.PLAYER_NOT_FOUND, "Player not found: " + id));
         if (req.dateNaissance() != null) validateAge(req.dateNaissance());
         if (req.nom() != null) j.setNom(req.nom());
         if (req.prenom() != null) j.setPrenom(req.prenom());
@@ -69,7 +71,7 @@ public class JoueurService {
 
     @Transactional(readOnly = true)
     public PlayerResponse get(UUID id) {
-        return joueurMapper.toResponse(joueurRepository.findById(id).orElseThrow());
+        return joueurMapper.toResponse(joueurRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.PLAYER_NOT_FOUND, "Player not found: " + id)));
     }
 
     @Transactional(readOnly = true)

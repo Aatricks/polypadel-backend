@@ -26,10 +26,8 @@ public class RankingService {
 
     @Transactional(readOnly = true)
     public List<RankingRow> rankingForPoule(UUID pouleId) {
-        // Load teams for the poule first; if none we can short‑circuit
-        List<Equipe> teams = equipeRepository.findAll().stream()
-                .filter(e -> e.getPoule() != null && pouleId.equals(e.getPoule().getId()))
-                .toList();
+        // Load teams for the poule directly from repo
+        List<Equipe> teams = equipeRepository.findByPouleId(pouleId);
         if (teams.isEmpty()) return List.of();
 
         List<UUID> teamIds = teams.stream().map(Equipe::getId).toList();

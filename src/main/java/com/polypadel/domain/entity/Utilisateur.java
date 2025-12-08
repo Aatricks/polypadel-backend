@@ -47,6 +47,11 @@ public class Utilisateur {
 
     private Instant updatedAt;
     private Instant lastLoginAt;
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts = 0;
+
+    @Column(name = "lockout_until")
+    private Instant lockoutUntil;
 
     @PrePersist
     void onCreate() {

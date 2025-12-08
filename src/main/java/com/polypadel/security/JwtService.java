@@ -24,7 +24,18 @@ public class JwtService {
 
     public JwtService(@Value("${security.jwt.secret}") String secret,
                       @Value("${security.jwt.expHours:24}") int expHours) {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        if (secret == null || secret.trim().isEmpty() || "REPLACE_ME".equals(secret)) {
+            throw new IllegalArgumentException("security.jwt.secret must be configured and not be the default placeholder");
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secret);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("security.jwt.secret must be base64 encoded and valid", e);
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalArgumentException("security.jwt.secret must decode to at least 256 bits (32 bytes) for HS256");
+        }
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.expHours = expHours;
     }

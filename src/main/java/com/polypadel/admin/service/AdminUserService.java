@@ -4,6 +4,8 @@ import com.polypadel.admin.dto.AdminCreateUserRequest;
 import com.polypadel.admin.dto.AdminCreateUserResponse;
 import com.polypadel.admin.dto.AdminResetPasswordResponse;
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.common.exception.ErrorCodes;
+import com.polypadel.common.exception.NotFoundException;
 import com.polypadel.domain.entity.Utilisateur;
 import com.polypadel.domain.enums.Role;
 import com.polypadel.users.repository.UtilisateurRepository;
@@ -55,7 +57,7 @@ public class AdminUserService {
 
     @Transactional
     public AdminResetPasswordResponse resetPassword(UUID userId) {
-        Utilisateur u = utilisateurRepository.findById(userId).orElseThrow();
+        Utilisateur u = utilisateurRepository.findById(userId).orElseThrow(() -> new NotFoundException(ErrorCodes.USER_NOT_FOUND, "Utilisateur not found: " + userId));
         String tempPwd = generateStrongPassword();
         u.setPasswordHash(passwordEncoder.encode(tempPwd));
         utilisateurRepository.save(u);

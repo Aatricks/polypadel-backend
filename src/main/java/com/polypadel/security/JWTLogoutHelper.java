@@ -22,11 +22,20 @@ public class JWTLogoutHelper {
     private final JwtService jwtService;
     private final JSONTokenRepository jsonTokenRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final boolean secureCookie;
 
-    public JWTLogoutHelper(JwtService jwtService, JSONTokenRepository jsonTokenRepository, UtilisateurRepository utilisateurRepository) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public JWTLogoutHelper(JwtService jwtService, JSONTokenRepository jsonTokenRepository, UtilisateurRepository utilisateurRepository,
+                           @org.springframework.beans.factory.annotation.Value("${security.cookie.secure:false}") boolean secureCookie) {
         this.jwtService = jwtService;
         this.jsonTokenRepository = jsonTokenRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.secureCookie = secureCookie;
+    }
+
+    // No-op constructor for test frameworks / compatibility (default secureCookie=false)
+    public JWTLogoutHelper(JwtService jwtService, JSONTokenRepository jsonTokenRepository, UtilisateurRepository utilisateurRepository) {
+        this(jwtService, jsonTokenRepository, utilisateurRepository, false);
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
@@ -54,12 +63,12 @@ public class JWTLogoutHelper {
         }
         // Clear cookie
         ResponseCookie clear = ResponseCookie.from("JWT", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(0)
-                .build();
+            .httpOnly(true)
+            .secure(secureCookie)
+            .path("/")
+            .sameSite("Lax")
+            .maxAge(0)
+            .build();
         response.addHeader("Set-Cookie", clear.toString());
     }
 

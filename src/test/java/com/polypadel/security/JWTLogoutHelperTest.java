@@ -33,10 +33,11 @@ public class JWTLogoutHelperTest {
     private JSONTokenRepository jsonTokenRepository;
     @Mock
     private UtilisateurRepository utilisateurRepository;
-
-    @InjectMocks
     private JWTLogoutHelper helper;
-
+    @org.junit.jupiter.api.BeforeEach
+    public void setUp() {
+        helper = new JWTLogoutHelper(jwtService, jsonTokenRepository, utilisateurRepository);
+    }
     @Test
     public void logout_with_cookie_revokes_token_and_clears_cookie() {
         String jti = UUID.randomUUID().toString();

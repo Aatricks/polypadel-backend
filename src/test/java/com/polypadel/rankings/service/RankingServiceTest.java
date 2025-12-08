@@ -36,7 +36,7 @@ public class RankingServiceTest {
         assertThat(res).containsExactly(2, 0, 12, 8);
 
         // empty team listing leads to empty ranking
-        when(equipeRepository.findAll()).thenReturn(List.of());
+        when(equipeRepository.findByPouleId(any())).thenReturn(List.of());
         var ranking = service.rankingForPoule(UUID.randomUUID());
         assertThat(ranking).isEmpty();
 
@@ -47,7 +47,7 @@ public class RankingServiceTest {
         Equipe t1 = new Equipe(); t1.setId(UUID.randomUUID()); t1.setPoule(poule); t1.setEntreprise("EntA");
         Equipe t2 = new Equipe(); t2.setId(UUID.randomUUID()); t2.setPoule(poule); t2.setEntreprise("EntA");
 
-        when(equipeRepository.findAll()).thenReturn(List.of(t1, t2));
+        when(equipeRepository.findByPouleId(eq(pouleId))).thenReturn(List.of(t1, t2));
 
         Match m = new Match();
         m.setId(UUID.randomUUID());
@@ -101,7 +101,7 @@ public class RankingServiceTest {
         Equipe t3 = new Equipe(); t3.setId(UUID.randomUUID()); t3.setPoule(p); t3.setEntreprise("Ent");
         Equipe t4 = new Equipe(); t4.setId(UUID.randomUUID()); t4.setPoule(p); t4.setEntreprise("Ent");
 
-        when(equipeRepository.findAll()).thenReturn(List.of(t1, t2, t3, t4));
+        when(equipeRepository.findByPouleId(eq(pouleId))).thenReturn(List.of(t1, t2, t3, t4));
 
         Match m13 = new Match(); m13.setEquipe1(t1); m13.setEquipe2(t3); m13.setScore1("6-4,6-4"); m13.setScore2("4-6,4-6"); m13.setStatut(MatchStatus.TERMINE);
         Match m14 = new Match(); m14.setEquipe1(t1); m14.setEquipe2(t4); m14.setScore1("6-4,6-4"); m14.setScore2("4-6,4-6"); m14.setStatut(MatchStatus.TERMINE);
@@ -118,7 +118,7 @@ public class RankingServiceTest {
         Equipe a = new Equipe(); a.setId(UUID.randomUUID()); a.setPoule(p); a.setEntreprise("Ent");
         Equipe b = new Equipe(); b.setId(UUID.randomUUID()); b.setPoule(p); b.setEntreprise("Ent");
         Equipe c = new Equipe(); c.setId(UUID.randomUUID()); c.setPoule(p); c.setEntreprise("Ent");
-        when(equipeRepository.findAll()).thenReturn(List.of(a, b, c));
+        when(equipeRepository.findByPouleId(eq(pouleId))).thenReturn(List.of(a, b, c));
         Match mA = new Match(); mA.setEquipe1(a); mA.setEquipe2(c); mA.setScore1("6-4,6-4"); mA.setScore2("4-6,4-6"); mA.setStatut(MatchStatus.TERMINE);
         Match mB = new Match(); mB.setEquipe1(b); mB.setEquipe2(c); mB.setScore1("6-4"); mB.setScore2("4-6"); mB.setStatut(MatchStatus.TERMINE);
         when(matchRepository.findFinishedWithinTeams(eq(MatchStatus.TERMINE), any())).thenReturn(List.of(mA, mB));
@@ -130,7 +130,7 @@ public class RankingServiceTest {
         Equipe g1 = new Equipe(); g1.setId(UUID.randomUUID()); g1.setPoule(p); g1.setEntreprise("Ent");
         Equipe g2 = new Equipe(); g2.setId(UUID.randomUUID()); g2.setPoule(p); g2.setEntreprise("Ent");
         Equipe g3 = new Equipe(); g3.setId(UUID.randomUUID()); g3.setPoule(p); g3.setEntreprise("Ent");
-        when(equipeRepository.findAll()).thenReturn(List.of(g1, g2, g3));
+        when(equipeRepository.findByPouleId(eq(pouleId))).thenReturn(List.of(g1, g2, g3));
         Match mg1 = new Match(); mg1.setEquipe1(g1); mg1.setEquipe2(g3); mg1.setScore1("6-0,1-6,6-4"); mg1.setScore2("0-6,6-1,4-6"); mg1.setStatut(MatchStatus.TERMINE);
         Match mg2 = new Match(); mg2.setEquipe1(g2); mg2.setEquipe2(g3); mg2.setScore1("6-4,4-6,6-4"); mg2.setScore2("4-6,6-4,4-6"); mg2.setStatut(MatchStatus.TERMINE);
         when(matchRepository.findFinishedWithinTeams(eq(MatchStatus.TERMINE), any())).thenReturn(List.of(mg1, mg2));
@@ -151,7 +151,7 @@ public class RankingServiceTest {
         Equipe t2 = new Equipe(); t2.setId(UUID.randomUUID()); t2.setPoule(p);
         Equipe outside = new Equipe(); outside.setId(UUID.randomUUID()); // not in poule
 
-        when(equipeRepository.findAll()).thenReturn(List.of(t1, t2));
+        when(equipeRepository.findByPouleId(eq(pouleId))).thenReturn(List.of(t1, t2));
         Match m = new Match(); m.setEquipe1(t1); m.setEquipe2(outside); m.setScore1("6-4"); m.setScore2("4-6"); m.setStatut(MatchStatus.TERMINE);
         when(matchRepository.findFinishedWithinTeams(eq(MatchStatus.TERMINE), any())).thenReturn(List.of(m));
 
@@ -172,7 +172,7 @@ public class RankingServiceTest {
 
         Equipe t1 = new Equipe(); t1.setId(UUID.randomUUID()); t1.setPoule(p);
         Equipe t2 = new Equipe(); t2.setId(UUID.randomUUID()); t2.setPoule(p);
-        when(equipeRepository.findAll()).thenReturn(List.of(t1, t2));
+        when(equipeRepository.findByPouleId(eq(pouleId))).thenReturn(List.of(t1, t2));
 
         Match m1 = new Match(); m1.setEquipe1(t2); m1.setEquipe2(t1); m1.setScore1("6-4,6-4"); m1.setScore2("4-6,4-6"); m1.setStatut(MatchStatus.TERMINE);
         Match m2 = new Match(); m2.setEquipe1(t2); m2.setEquipe2(t1); m2.setScore1("6-4,6-4"); m2.setScore2("4-6,4-6"); m2.setStatut(MatchStatus.TERMINE);

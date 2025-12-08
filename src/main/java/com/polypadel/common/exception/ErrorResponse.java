@@ -15,4 +15,10 @@ public class ErrorResponse {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<String> details;
     public String traceId;
+    @com.fasterxml.jackson.annotation.JsonProperty("attempts_remaining")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Integer attemptsRemaining;
+    @com.fasterxml.jackson.annotation.JsonProperty("minutes_remaining")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long minutesRemaining;
 }

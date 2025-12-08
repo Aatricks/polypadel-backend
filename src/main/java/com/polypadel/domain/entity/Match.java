@@ -30,15 +30,15 @@ public class Match {
     @Column(nullable = false)
     private Integer piste;
 
-    @ManyToOne(optional = false)
+        @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "equipe1_id", nullable = false, foreignKey = @ForeignKey(name = "fk_match_equipe1"))
     private Equipe equipe1;
 
-    @ManyToOne(optional = false)
+        @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "equipe2_id", nullable = false, foreignKey = @ForeignKey(name = "fk_match_equipe2"))
     private Equipe equipe2;
 
-    @ManyToOne(optional = false)
+        @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "evenement_id", nullable = false, foreignKey = @ForeignKey(name = "fk_match_evenement"))
     private Evenement evenement;
 

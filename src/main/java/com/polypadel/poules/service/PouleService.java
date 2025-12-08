@@ -1,6 +1,8 @@
 package com.polypadel.poules.service;
 
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.common.exception.ErrorCodes;
+import com.polypadel.common.exception.NotFoundException;
 import com.polypadel.domain.entity.Poule;
 import com.polypadel.equipes.repository.EquipeRepository;
 import com.polypadel.equipes.service.EquipeService;
@@ -39,7 +41,7 @@ public class PouleService {
 
     @Transactional
     public PouleResponse update(UUID id, PouleUpdateRequest req) {
-        Poule p = pouleRepository.findById(id).orElseThrow();
+        Poule p = pouleRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.POULE_NOT_FOUND, "Poule not found: " + id));
         p.setNom(req.nom().trim());
         return toResponse(pouleRepository.save(p));
     }
@@ -54,7 +56,7 @@ public class PouleService {
 
     @Transactional(readOnly = true)
     public PouleResponse get(UUID id) {
-        return toResponse(pouleRepository.findById(id).orElseThrow());
+        return toResponse(pouleRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.POULE_NOT_FOUND, "Poule not found: " + id)));
     }
 
     @Transactional(readOnly = true)

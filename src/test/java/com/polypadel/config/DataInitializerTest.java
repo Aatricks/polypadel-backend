@@ -25,6 +25,10 @@ public class DataInitializerTest {
     private EventRepository eventRepository;
     @Mock
     private MatchRepository matchRepository;
+    @Mock
+    private com.polypadel.users.repository.UtilisateurRepository utilisateurRepository;
+    @Mock
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private DataInitializer dataInitializer;

@@ -1,6 +1,8 @@
 package com.polypadel.matches.service;
 
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.common.exception.ErrorCodes;
+import com.polypadel.common.exception.NotFoundException;
 import com.polypadel.domain.entity.Equipe;
 import com.polypadel.domain.entity.Evenement;
 import com.polypadel.domain.entity.Match;
@@ -47,9 +49,9 @@ public class MatchService {
         if (req.equipe1Id().equals(req.equipe2Id())) {
             throw new BusinessException("MATCH_TEAMS_SAME", "Teams must be different");
         }
-        Evenement event = eventRepository.findById(req.evenementId()).orElseThrow();
-        Equipe t1 = equipeRepository.findById(req.equipe1Id()).orElseThrow();
-        Equipe t2 = equipeRepository.findById(req.equipe2Id()).orElseThrow();
+        Evenement event = eventRepository.findById(req.evenementId()).orElseThrow(() -> new NotFoundException(ErrorCodes.EVENT_NOT_FOUND, "Event not found: " + req.evenementId()));
+        Equipe t1 = equipeRepository.findById(req.equipe1Id()).orElseThrow(() -> new NotFoundException(ErrorCodes.TEAM_NOT_FOUND, "Team not found: " + req.equipe1Id()));
+        Equipe t2 = equipeRepository.findById(req.equipe2Id()).orElseThrow(() -> new NotFoundException(ErrorCodes.TEAM_NOT_FOUND, "Team not found: " + req.equipe2Id()));
 
         if (matchRepository.existsByEvenementIdAndPisteAndStartTime(event.getId(), req.piste(), req.startTime())) {
             throw new BusinessException("MATCH_SLOT_TAKEN", "This time slot and piste are already used");
@@ -72,7 +74,7 @@ public class MatchService {
 
     @Transactional
     public MatchResponse updateScore(UUID id, MatchUpdateScoreRequest req) {
-        Match m = matchRepository.findById(id).orElseThrow();
+        Match m = matchRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.MATCH_NOT_FOUND, "Match not found: " + id));
         if (req.statut() != null) {
             m.setStatut(req.statut());
         }
@@ -88,7 +90,7 @@ public class MatchService {
     public List<MatchResponse> upcomingForCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UUID userId = UUID.fromString(auth.getName());
-        var joueur = joueurRepository.findByUtilisateurId(userId).orElseThrow();
+        var joueur = joueurRepository.findByUtilisateurId(userId).orElseThrow(() -> new NotFoundException(com.polypadel.common.exception.ErrorCodes.PLAYER_NOT_FOUND, "Player not found for user: " + userId));
         var teamIds = equipeRepository.findIdsByPlayer(joueur.getId());
         if (teamIds.isEmpty()) return List.of();
         var statuses = List.of(MatchStatus.A_VENIR, MatchStatus.EN_COURS);
@@ -104,7 +106,7 @@ public class MatchService {
     public List<MatchResponse> finishedForCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UUID userId = UUID.fromString(auth.getName());
-        var joueur = joueurRepository.findByUtilisateurId(userId).orElseThrow();
+        var joueur = joueurRepository.findByUtilisateurId(userId).orElseThrow(() -> new NotFoundException(com.polypadel.common.exception.ErrorCodes.PLAYER_NOT_FOUND, "Player not found for user: " + userId));
         var teamIds = equipeRepository.findIdsByPlayer(joueur.getId());
         if (teamIds.isEmpty()) return List.of();
         var statuses = List.of(MatchStatus.TERMINE);

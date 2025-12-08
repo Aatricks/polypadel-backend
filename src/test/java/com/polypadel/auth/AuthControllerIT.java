@@ -65,4 +65,47 @@ public class AuthControllerIT extends PostgresTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("AUTH_INVALID_CREDENTIALS"));
     }
+
+        @Test
+        void login_locks_after_three_failed_attempts() throws Exception {
+        String body = "{\"email\":\"user@example.com\",\"password\":\"Wrong\"}";
+
+        // 1st attempt
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body.getBytes(StandardCharsets.UTF_8)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("AUTH_INVALID_CREDENTIALS"));
+
+        // 2nd attempt
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body.getBytes(StandardCharsets.UTF_8)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("AUTH_INVALID_CREDENTIALS"));
+
+        // 3rd attempt -> locked
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body.getBytes(StandardCharsets.UTF_8)))
+            .andExpect(status().isLocked())
+            .andExpect(jsonPath("$.code").value("AUTH_ACCOUNT_LOCKED"));
+        }
+
+        @Test
+        void login_allows_after_lockout_expiry() throws Exception {
+        // Lock the account by direct modification, set lockoutUntil to past
+        Utilisateur u = utilisateurRepository.findByEmail("user@example.com").orElseThrow();
+        u.setFailedLoginAttempts(3);
+        u.setLockoutUntil(java.time.Instant.now().minus(java.time.Duration.ofMinutes(1)));
+        utilisateurRepository.save(u);
+
+        // Now try with correct password
+        String body = "{\"email\":\"user@example.com\",\"password\":\"Password1!\"}";
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body.getBytes(StandardCharsets.UTF_8)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").exists());
+        }
 }

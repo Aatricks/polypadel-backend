@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgres:14-alpine
+    # Use a pinned minor version to avoid runtime incompatibilities with Flyway's DB version detection
+    image: postgres:14.9-alpine
     environment:
       POSTGRES_DB: polypadel
       POSTGRES_USER: polypadel
@@ -17,6 +18,9 @@ services:
       SPRING_DATASOURCE_USERNAME: polypadel
       SPRING_DATASOURCE_PASSWORD: changeme
       JWT_SECRET: dGVzdC1qd3Qtc2VjcmV0LXN1cGVyLWxvbmcgYmFzZTY0IHN0cmluZw==
+      # Enable Flyway migrations in development to ensure schema updates (index & columns) are applied safely
+      # For dev Docker Compose we prefer to let Hibernate create and manage schema
+      # (faster iteration). Flyway is enabled in CI / production.
       SPRING_FLYWAY_ENABLED: "false"
       JWT_EXP_HOURS: 24
       CORS_ALLOWED_ORIGINS: http://localhost:5173

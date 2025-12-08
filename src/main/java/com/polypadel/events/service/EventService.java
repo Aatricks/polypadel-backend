@@ -1,6 +1,8 @@
 package com.polypadel.events.service;
 
 import com.polypadel.common.exception.BusinessException;
+import com.polypadel.common.exception.ErrorCodes;
+import com.polypadel.common.exception.NotFoundException;
 import com.polypadel.domain.entity.Evenement;
 import com.polypadel.events.dto.EventCreateRequest;
 import com.polypadel.events.dto.EventResponse;
@@ -42,7 +44,7 @@ public class EventService {
     @Transactional
     public EventResponse update(UUID id, EventUpdateRequest req) {
         validateDates(req.dateDebut(), req.dateFin());
-        Evenement e = eventRepository.findById(id).orElseThrow();
+        Evenement e = eventRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.EVENT_NOT_FOUND, "Event not found: " + id));
         e.setDateDebut(req.dateDebut());
         e.setDateFin(req.dateFin());
         return eventMapper.toResponse(eventRepository.save(e));
@@ -58,7 +60,7 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public EventResponse get(UUID id) {
-        return eventMapper.toResponse(eventRepository.findById(id).orElseThrow());
+        return eventMapper.toResponse(eventRepository.findById(id).orElseThrow(() -> new NotFoundException(ErrorCodes.EVENT_NOT_FOUND, "Event not found: " + id)));
     }
 
     @Transactional(readOnly = true)

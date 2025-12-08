@@ -46,7 +46,7 @@ public class RankingServiceUnitTest {
 
     @Test
     public void parseScore_and_ranking_for_poule() {
-        when(equipeRepository.findAll()).thenReturn(List.of(e1, e2));
+        when(equipeRepository.findByPouleId(pouleId)).thenReturn(List.of(e1, e2));
         Match m = new Match(); m.setId(UUID.randomUUID());
         m.setEquipe1(e1); m.setEquipe2(e2);
         // Team 1 wins first set and second set also -> 2-0
@@ -62,7 +62,7 @@ public class RankingServiceUnitTest {
 
     @Test
     public void malformed_scores_dont_break_ranking() {
-        when(equipeRepository.findAll()).thenReturn(List.of(e1, e2));
+        when(equipeRepository.findByPouleId(pouleId)).thenReturn(List.of(e1, e2));
         Match m2 = new Match(); m2.setId(UUID.randomUUID()); m2.setEquipe1(e1); m2.setEquipe2(e2);
         m2.setScore1("bad-data,x"); m2.setScore2("bad,stuff");
         when(matchRepository.findFinishedWithinTeams(MatchStatus.TERMINE, List.of(e1.getId(), e2.getId()))).thenReturn(List.of(m2));

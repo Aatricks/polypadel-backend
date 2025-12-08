@@ -20,7 +20,7 @@ public class Equipe {
     @Column(nullable = false, length = 128)
     private String entreprise;
 
-    @ManyToOne(optional = true)
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "poule_id", foreignKey = @ForeignKey(name = "fk_equipe_poule"))
     private Poule poule;
 
