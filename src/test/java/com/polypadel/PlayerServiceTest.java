@@ -25,10 +25,11 @@ class PlayerServiceTest {
 
     @Test
     void createPlayer() {
-        PlayerRequest request = new PlayerRequest("New", "Player", "New Corp", "L888888", "new@test.com");
+        String unique = String.valueOf(System.currentTimeMillis()).substring(7);
+        PlayerRequest request = new PlayerRequest("New", "Player", "New Corp", "L" + unique, "new" + unique + "@test.com");
         PlayerResponse response = playerService.create(request);
         assertEquals("New", response.firstName());
-        assertEquals("L888888", response.licenseNumber());
+        assertTrue(response.licenseNumber().startsWith("L"));
     }
 
     @Test

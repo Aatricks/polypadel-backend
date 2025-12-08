@@ -35,7 +35,10 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         LoginAttempt attempt = loginAttemptRepository.findByEmail(request.email())
-                .orElse(new LoginAttempt(request.email()));
+                .orElseGet(() -> {
+                    LoginAttempt newAttempt = new LoginAttempt(request.email());
+                    return loginAttemptRepository.save(newAttempt);
+                });
 
         // Check if locked
         if (attempt.getLockedUntil() != null && attempt.getLockedUntil().isAfter(LocalDateTime.now())) {

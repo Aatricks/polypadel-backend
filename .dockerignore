@@ -1,0 +1,23 @@
+# Build artifacts
+target/
+*.jar
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+data/
+
+# Logs
+*.log
+
+# Maven
+.mvn/
