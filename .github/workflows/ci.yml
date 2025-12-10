@@ -28,4 +28,4 @@ jobs:
         run: mvn -B -DskipTests package
 
       - name: Run tests
-        run: mvn -B test
+        run: mvn -B -DskipTests=false clean verify
