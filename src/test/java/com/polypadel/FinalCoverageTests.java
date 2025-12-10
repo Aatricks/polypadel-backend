@@ -1,26 +1,36 @@
 package com.polypadel;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.polypadel.dto.*;
 import com.polypadel.model.*;
 import com.polypadel.repository.*;
 import com.polypadel.service.*;
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.time.LocalDate;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 class FinalCoverageTests {
 
-    @Autowired private RankingService rankingService;
-    @Autowired private AdminService adminService;
-    @Autowired private ProfileService profileService;
-    @Autowired private PlayerService playerService;
-    @Autowired private UserRepository userRepository;
-    @Autowired private PlayerRepository playerRepository;
+    @Autowired
+    private RankingService rankingService;
+
+    @Autowired
+    private AdminService adminService;
+
+    @Autowired
+    private ProfileService profileService;
+
+    @Autowired
+    private PlayerService playerService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PlayerRepository playerRepository;
 
     @Test
     void rankingWithCompletedMatches() {
@@ -45,7 +55,9 @@ class FinalCoverageTests {
 
     @Test
     void profileUpdateEmail() {
-        User joueur = userRepository.findByEmail("joueur@padel.com").orElse(null);
+        User joueur = userRepository
+            .findByEmail("joueur@padel.com")
+            .orElse(null);
         if (joueur != null) {
             var profile = profileService.getProfile(joueur);
             assertNotNull(profile);
@@ -55,15 +67,22 @@ class FinalCoverageTests {
     @Test
     void playerSanitization() {
         String unique = String.valueOf(System.currentTimeMillis()).substring(5);
-        var p = playerService.create(new PlayerRequest(
-            "Test<b>Bold</b>", "Name", "Corp", "L8" + unique, "san" + unique + "@test.com"));
+        var p = playerService.create(
+            new PlayerRequest(
+                "Test<b>Bold</b>",
+                "Name",
+                "Corp",
+                "L8" + unique,
+                "san" + unique + "@test.com"
+            )
+        );
         assertFalse(p.firstName().contains("<b>"));
     }
 
     @Test
     void matchServiceFindById() {
         try {
-            var m = new MatchService(null, null);
+            var m = new MatchService(null, null, null, null);
         } catch (Exception e) {
             // Expected
         }
@@ -83,7 +102,7 @@ class FinalCoverageTests {
         pool.setId(1L);
         pool.setName("Test Pool");
         pool.setTeams(new java.util.ArrayList<>());
-        
+
         assertEquals(1L, pool.getId());
         assertEquals("Test Pool", pool.getName());
         assertTrue(pool.getTeams().isEmpty());
