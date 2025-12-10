@@ -43,8 +43,6 @@ mvn verify                         # Run tests with coverage check
 open target/site/jacoco/index.html # View coverage report
 ```
 
-**Code Coverage: 74%** (requirement: 70%)
-
 ## Default Test Accounts
 
 Created automatically on first run:
@@ -114,20 +112,6 @@ Created automatically on first run:
 |----------|--------|------|-------------|
 | `/admin/accounts/create` | POST | Admin | Create account for player |
 | `/admin/accounts/{id}/reset-password` | POST | Admin | Reset password |
-
-## Project Structure
-
-```
-src/main/java/com/polypadel/
-├── Application.java        # Main entry point
-├── model/                  # JPA Entities (User, Player, Team, Pool, Event, Match)
-├── repository/             # Spring Data JPA Repositories
-├── service/                # Business logic
-├── controller/             # REST Controllers
-├── dto/                    # Request/Response DTOs
-├── security/               # JWT Service and Filter
-└── config/                 # Security, CORS, Exception handling
-```
 
 ## Security Features
 
