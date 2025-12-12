@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,8 +19,7 @@ public class PoolController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> findAll() {
-        List<PoolResponse> pools = poolService.findAll();
-        return ResponseEntity.ok(Map.of("pools", pools));
+        return ResponseEntity.ok(Map.of("pools", poolService.findAll()));
     }
 
     @GetMapping("/{id}")
@@ -41,7 +39,7 @@ public class PoolController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        poolService.delete(id);
+        poolService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

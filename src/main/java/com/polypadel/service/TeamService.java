@@ -3,13 +3,12 @@ package com.polypadel.service;
 import com.polypadel.dto.*;
 import com.polypadel.model.*;
 import com.polypadel.repository.*;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
-public class TeamService {
+public class TeamService extends BaseService<Team, Long, TeamResponse> {
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final PoolRepository poolRepository;
@@ -23,37 +22,30 @@ public class TeamService {
         this.matchRepository = matchRepository;
     }
 
-    public List<TeamResponse> findAll(Long poolId, String company) {
-        List<Team> teams;
-        if (poolId != null) {
-            teams = teamRepository.findByPoolId(poolId);
-        } else if (company != null) {
-            teams = teamRepository.findByCompany(company);
-        } else {
-            teams = teamRepository.findAll();
-        }
-        return teams.stream().map(this::toResponse).toList();
-    }
+    @Override protected JpaRepository<Team, Long> getRepository() { return teamRepository; }
+    @Override protected String getEntityName() { return "Équipe"; }
 
-    public TeamResponse findById(Long id) {
-        return toResponse(teamRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe non trouvée")));
+    public List<TeamResponse> findAll(Long poolId, String company) {
+        List<Team> teams = poolId != null ? teamRepository.findByPoolId(poolId)
+            : company != null ? teamRepository.findByCompany(company)
+            : teamRepository.findAll();
+        return teams.stream().map(this::toResponse).toList();
     }
 
     public TeamResponse create(TeamRequest request) {
         if (request.player1Id().equals(request.player2Id())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Les deux joueurs doivent être différents");
+            throw badRequest("Les deux joueurs doivent être différents");
         }
         Player p1 = playerRepository.findById(request.player1Id())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Joueur 1 non trouvé"));
+            .orElseThrow(() -> badRequest("Joueur 1 non trouvé"));
         Player p2 = playerRepository.findById(request.player2Id())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Joueur 2 non trouvé"));
-        
+            .orElseThrow(() -> badRequest("Joueur 2 non trouvé"));
+
         if (!p1.getCompany().equals(p2.getCompany())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Les joueurs doivent appartenir à la même entreprise");
+            throw badRequest("Les joueurs doivent appartenir à la même entreprise");
         }
         if (!teamRepository.findByPlayerId(p1.getId()).isEmpty() || !teamRepository.findByPlayerId(p2.getId()).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Un joueur est déjà dans une équipe");
+            throw conflict("Un joueur est déjà dans une équipe");
         }
 
         Team team = new Team();
@@ -67,10 +59,9 @@ public class TeamService {
     }
 
     public TeamResponse update(Long id, TeamRequest request) {
-        Team team = teamRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe non trouvée"));
+        Team team = getEntityById(id);
         if (!matchRepository.findByTeamId(id).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Modification impossible: des matchs existent");
+            throw conflict("Modification impossible: des matchs existent");
         }
         team.setCompany(request.company());
         if (request.poolId() != null) {
@@ -79,15 +70,14 @@ public class TeamService {
         return toResponse(teamRepository.save(team));
     }
 
-    public void delete(Long id) {
-        Team team = teamRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe non trouvée"));
-        if (!matchRepository.findByTeamId(id).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Suppression impossible: des matchs existent");
+    @Override
+    protected void validateDelete(Team team) {
+        if (!matchRepository.findByTeamId(team.getId()).isEmpty()) {
+            throw conflict("Suppression impossible: des matchs existent");
         }
-        teamRepository.delete(team);
     }
 
+    @Override
     public TeamResponse toResponse(Team t) {
         return new TeamResponse(t.getId(), t.getCompany(),
             List.of(new TeamResponse.PlayerInfo(t.getPlayer1().getId(), t.getPlayer1().getFirstName(), t.getPlayer1().getLastName()),

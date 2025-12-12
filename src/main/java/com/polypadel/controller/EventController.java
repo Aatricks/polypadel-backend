@@ -25,8 +25,7 @@ public class EventController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String month) {
-        List<EventResponse> events = eventService.findAll(startDate, endDate, month);
-        return ResponseEntity.ok(Map.of("events", events));
+        return ResponseEntity.ok(Map.of("events", eventService.findAll(startDate, endDate, month)));
     }
 
     @GetMapping("/{id}")
@@ -46,7 +45,7 @@ public class EventController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        eventService.delete(id);
+        eventService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

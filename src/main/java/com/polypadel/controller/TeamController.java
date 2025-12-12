@@ -43,7 +43,7 @@ public class TeamController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        teamService.delete(id);
+        teamService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }
