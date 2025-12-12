@@ -31,7 +31,7 @@ public class UserAuthService {
     @Value("${app.lockout.max-attempts:5}")
     private int maxAttempts;
 
-    @Value("${app.lockout.duration-minutes:15}")
+    @Value("${app.lockout.duration-minutes:30}")
     private int lockoutMinutes;
 
     public UserAuthService(UserRepository userRepository, PlayerRepository playerRepository,
@@ -118,10 +118,13 @@ public class UserAuthService {
         if (player.getUser() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce joueur a déjà un compte");
         }
+        if (player.getEmail() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le joueur n'a pas d'email défini");
+        }
 
         String tempPassword = generatePassword();
         User user = new User();
-        user.setEmail(player.getLicenseNumber() + "@polypadel.local");
+        user.setEmail(player.getEmail());
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
         user.setRole(role != null ? Role.valueOf(role) : Role.JOUEUR);
         user.setMustChangePassword(true);

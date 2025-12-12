@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/events/**", "/matches/**", "/results/**", "/pools/**", "/teams/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMINISTRATEUR")
-                .requestMatchers(HttpMethod.POST, "/players/**", "/teams/**", "/pools/**", "/events/**", "/matches/**").hasRole("ADMINISTRATEUR")
+                .requestMatchers(HttpMethod.GET, "/players/**").hasRole("ADMINISTRATEUR")
                 .requestMatchers(HttpMethod.PUT, "/players/**", "/teams/**", "/pools/**", "/events/**", "/matches/**").hasRole("ADMINISTRATEUR")
                 .requestMatchers(HttpMethod.DELETE, "/players/**", "/teams/**", "/pools/**", "/events/**", "/matches/**").hasRole("ADMINISTRATEUR")
                 .anyRequest().authenticated()

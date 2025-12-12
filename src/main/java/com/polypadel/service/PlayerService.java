@@ -25,7 +25,7 @@ public class PlayerService extends BaseService<Player, Long, PlayerResponse> {
         if (playerRepository.existsByLicenseNumber(request.licenseNumber())) {
             throw conflict("Ce numéro de licence existe déjà");
         }
-        if (userRepository.existsByEmail(request.email())) {
+        if (request.email() != null && userRepository.existsByEmail(request.email())) {
             throw conflict("Cet email existe déjà");
         }
         Player player = new Player();
@@ -33,6 +33,7 @@ public class PlayerService extends BaseService<Player, Long, PlayerResponse> {
         player.setLastName(sanitize(request.lastName()));
         player.setCompany(sanitize(request.company()));
         player.setLicenseNumber(request.licenseNumber());
+        player.setEmail(request.email());
         return toResponse(playerRepository.save(player));
     }
 

@@ -24,6 +24,9 @@ public class Player {
     @Column(unique = true, nullable = false)
     private String licenseNumber;
 
+    @Column(unique = true)
+    private String email;
+
     private LocalDate birthDate;
     private String photoUrl;
 

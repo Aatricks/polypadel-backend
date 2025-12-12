@@ -43,6 +43,7 @@ public class DataInitializer implements CommandLineRunner {
             p2.setLastName("Martin");
             p2.setCompany("Tech Corp");
             p2.setLicenseNumber("L123457");
+            p2.setEmail("marie.martin@test.com");
             playerRepository.save(p2);
 
             Player p3 = new Player();
@@ -50,6 +51,7 @@ public class DataInitializer implements CommandLineRunner {
             p3.setLastName("Durand");
             p3.setCompany("Innov Ltd");
             p3.setLicenseNumber("L123458");
+            p3.setEmail("pierre.durand@test.com");
             playerRepository.save(p3);
 
             Player p4 = new Player();
@@ -57,6 +59,7 @@ public class DataInitializer implements CommandLineRunner {
             p4.setLastName("Bernard");
             p4.setCompany("Innov Ltd");
             p4.setLicenseNumber("L123459");
+            p4.setEmail("sophie.bernard@test.com");
             playerRepository.save(p4);
 
             System.out.println("=== Test accounts created ===");

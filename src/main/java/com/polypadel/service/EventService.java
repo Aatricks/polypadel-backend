@@ -76,6 +76,9 @@ public class EventService extends BaseService<Event, Long, EventResponse> {
     }
 
     private void validateEventRequest(EventRequest request) {
+        if (request.eventDate().isBefore(LocalDate.now())) {
+            throw badRequest("La date de l'événement doit être aujourd'hui ou dans le futur");
+        }
         Set<Integer> courts = new HashSet<>();
         Set<Long> teams = new HashSet<>();
         for (EventRequest.MatchInfo mi : request.matches()) {

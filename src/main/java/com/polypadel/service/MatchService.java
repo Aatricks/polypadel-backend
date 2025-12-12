@@ -59,8 +59,14 @@ public class MatchService extends BaseService<Match, Long, MatchResponse> {
     public MatchResponse update(Long id, MatchUpdateRequest request) {
         Match match = getEntityById(id);
         if (request.status() != null) match.setStatus(MatchStatus.valueOf(request.status()));
-        if (request.scoreTeam1() != null) match.setScoreTeam1(request.scoreTeam1());
-        if (request.scoreTeam2() != null) match.setScoreTeam2(request.scoreTeam2());
+        if (request.scoreTeam1() != null) {
+            validateScore(request.scoreTeam1());
+            match.setScoreTeam1(request.scoreTeam1());
+        }
+        if (request.scoreTeam2() != null) {
+            validateScore(request.scoreTeam2());
+            match.setScoreTeam2(request.scoreTeam2());
+        }
         return toResponse(matchRepository.save(match));
     }
 
@@ -68,6 +74,20 @@ public class MatchService extends BaseService<Match, Long, MatchResponse> {
     protected void validateDelete(Match match) {
         if (match.getStatus() != MatchStatus.A_VENIR) {
             throw conflict("Seuls les matchs à venir peuvent être supprimés");
+        }
+    }
+
+    private void validateScore(String score) {
+        if (!score.matches("^(\\d+-\\d+)(,\\s*\\d+-\\d+){1,2}$")) {
+            throw badRequest("Format de score invalide (ex: 6-4, 6-3)");
+        }
+        String[] sets = score.split(",\\s*");
+        for (String set : sets) {
+            String[] points = set.split("-");
+            int p1 = Integer.parseInt(points[0]);
+            int p2 = Integer.parseInt(points[1]);
+            if (Math.max(p1, p2) < 6) throw badRequest("Un set doit avoir au moins 6 jeux gagnés");
+            if (Math.min(p1, p2) > 5 && Math.abs(p1 - p2) > 1) throw badRequest("Écart invalide dans le set");
         }
     }
 
