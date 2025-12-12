@@ -1,11 +1,13 @@
 package com.polypadel.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "pools")
+@Data
 public class Pool {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,13 +18,4 @@ public class Pool {
 
     @OneToMany(mappedBy = "pool")
     private List<Team> teams = new ArrayList<>();
-
-    public Pool() {}
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public List<Team> getTeams() { return teams; }
-    public void setTeams(List<Team> teams) { this.teams = teams; }
 }
